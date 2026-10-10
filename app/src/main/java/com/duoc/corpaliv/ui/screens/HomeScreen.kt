@@ -2,6 +2,7 @@ package com.duoc.corpaliv.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -9,10 +10,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import com.duoc.corpaliv.ui.theme.AppCorpaliv_Grupo5Theme
+import com.duoc.corpaliv.ui.utils.obtenerWindowSizeClass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
+    // obtenemos el tamaño de la pantalla actual
+    val windowSizeClass = obtenerWindowSizeClass()
+
+    // decidimos el margen dependiendo si es celular o tablet
+    val margenLateral = when (windowSizeClass.widthSizeClass) {
+        WindowWidthSizeClass.Compact -> 24.dp
+        WindowWidthSizeClass.Medium -> 48.dp
+        WindowWidthSizeClass.Expanded -> 100.dp
+        else -> 24.dp
+    }
+
     // da la estructura base con barra superior
     Scaffold(
         topBar = {
@@ -30,7 +43,8 @@ fun HomeScreen() {
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(24.dp), // margenes para que no quede pegado a los bordes
+                // usamos el margen dinamico en vez del fijo
+                .padding(horizontal = margenLateral),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
