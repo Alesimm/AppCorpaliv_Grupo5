@@ -10,7 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun obtenerWindowSizeClass(): WindowSizeClass {
-    // usamos localcontext que es estable en todas las ver
+    // obtiene la actividad actual desde el contexto para medir la pantalla
     val actividad = LocalContext.current as Activity
     return calculateWindowSizeClass(actividad)
 }
