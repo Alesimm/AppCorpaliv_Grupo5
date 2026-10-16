@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.duoc.corpaliv.ui.screens.HomeScreen
+import com.duoc.corpaliv.navigation.AppNavigation
 import com.duoc.corpaliv.ui.theme.AppCorpaliv_Grupo5Theme
 
 class MainActivity : ComponentActivity() {
@@ -13,8 +13,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AppCorpaliv_Grupo5Theme {
-                // carga nuestra pantalla inicial en vez del texto por defecto
-                HomeScreen()
+                // inicia el sistema de navegacion de la app
+                AppNavigation()
             }
         }
     }

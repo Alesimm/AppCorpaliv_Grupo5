@@ -14,11 +14,14 @@ import com.duoc.corpaliv.ui.utils.obtenerWindowSizeClass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
-    // obtenemos el tamaño de la pantalla actual
+fun HomeScreen(
+    alIrACatalogo: () -> Unit = {},
+    alIrAContacto: () -> Unit = {}
+) {
+    // obtiene el tamaño de la pantalla actual
     val windowSizeClass = obtenerWindowSizeClass()
 
-    // decidimos el margen dependiendo si es celular o tablet
+    // define el margen dependiendo si es celular o tablet
     val margenLateral = when (windowSizeClass.widthSizeClass) {
         WindowWidthSizeClass.Compact -> 24.dp
         WindowWidthSizeClass.Medium -> 48.dp
@@ -43,7 +46,7 @@ fun HomeScreen() {
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                // usamos el margen dinamico en vez del fijo
+                // aplica el margen dinamico segun la pantalla
                 .padding(horizontal = margenLateral),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -65,9 +68,9 @@ fun HomeScreen() {
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // boton principal lleno
+            // boton principal lleno conectado a la navegacion
             Button(
-                onClick = { /* TODO: navegar a catalogo */ },
+                onClick = alIrACatalogo,
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
                 Text("Ver Programas Sociales")
@@ -75,9 +78,9 @@ fun HomeScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // boton secundario solo con linea
+            // boton secundario solo con linea conectado a la navegacion
             OutlinedButton(
-                onClick = { /* TODO: navegar a formulario */ },
+                onClick = alIrAContacto,
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
                 Text("Quiero Colaborar")
