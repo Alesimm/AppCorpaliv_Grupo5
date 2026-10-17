@@ -9,12 +9,17 @@ import androidx.navigation.compose.rememberNavController
 import com.duoc.corpaliv.ui.screens.CatalogScreen
 import com.duoc.corpaliv.ui.screens.ContactScreen
 import com.duoc.corpaliv.ui.screens.HomeScreen
+import com.duoc.corpaliv.ui.screens.ResumenScreen
 import com.duoc.corpaliv.viewmodel.MainViewModel
+import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
 @Composable
 fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
     // controlador que maneja el historial de pantallas
     val navController = rememberNavController()
+
+    // crea el viewmodel del formulario una sola vez para compartir datos
+    val usuarioViewModel: UsuarioViewModel = viewModel()
 
     // escucha los eventos que manda el viewmodel y ejecuta el cambio de pantalla
     LaunchedEffect(Unit) {
@@ -51,7 +56,15 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
         }
         composable(Screen.Contacto.route) {
             ContactScreen(
+                viewModel = usuarioViewModel,
+                alIrAResumen = { mainViewModel.navegarA(Screen.Resumen) },
                 alVolver = { mainViewModel.volverAtras() }
+            )
+        }
+        composable(Screen.Resumen.route) {
+            ResumenScreen(
+                viewModel = usuarioViewModel,
+                alVolverAlInicio = { mainViewModel.navegarA(Screen.Home) }
             )
         }
     }
