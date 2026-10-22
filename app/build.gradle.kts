@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    // activa el procesador ksp en el modulo de la app para usar room
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -46,9 +48,19 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("androidx.compose.material3:material3-window-size-class:1.2.1")
+
+    // librerias para navegacion entre pantallas y arquitectura mvvm con viewmodel
     implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+
+    // libreria datastore para guardar preferencias simples en el telefono
     implementation("androidx.datastore:datastore-preferences:1.1.0")
+
+    // librerias de sqlite room para base de datos local con operaciones crud
+    implementation("androidx.room:room-runtime:2.7.2")
+    implementation("androidx.room:room-ktx:2.7.2")
+    ksp("androidx.room:room-compiler:2.7.2")
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

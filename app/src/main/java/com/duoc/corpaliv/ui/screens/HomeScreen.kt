@@ -9,20 +9,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import com.duoc.corpaliv.ui.components.AppTopBar
+import com.duoc.corpaliv.ui.components.BotonPrincipal
+import com.duoc.corpaliv.ui.components.BotonSecundario
 import com.duoc.corpaliv.ui.theme.AppCorpaliv_Grupo5Theme
 import com.duoc.corpaliv.ui.utils.obtenerWindowSizeClass
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     alIrACatalogo: () -> Unit = {},
     alIrAContacto: () -> Unit = {},
     alIrAEstado: () -> Unit = {}
 ) {
-    // obtiene el tamaño de la pantalla actual
+    // mide el ancho de la pantalla actual para adaptar los margenes
     val windowSizeClass = obtenerWindowSizeClass()
 
-    // define el margen dependiendo si es celular o tablet
+    // ajusta el margen lateral segun si es celular compacto o tablet expandida
     val margenLateral = when (windowSizeClass.widthSizeClass) {
         WindowWidthSizeClass.Compact -> 24.dp
         WindowWidthSizeClass.Medium -> 48.dp
@@ -30,24 +32,16 @@ fun HomeScreen(
         else -> 24.dp
     }
 
-    // da la estructura base con barra superior
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Alba Lab - CORPALIV") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            )
+            // usa el componente topbar reutilizable
+            AppTopBar(titulo = "Alba Lab - CORPALIV")
         }
     ) { innerPadding ->
-        // apila todo verticalmente
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                // aplica el margen dinamico segun la pantalla
                 .padding(horizontal = margenLateral),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -69,38 +63,29 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // boton principal lleno conectado a la navegacion
-            Button(
-                onClick = alIrACatalogo,
-                modifier = Modifier.fillMaxWidth().height(50.dp)
-            ) {
-                Text("Ver Programas Sociales")
-            }
+            // usa los botones reutilizados desde el paquete components
+            BotonPrincipal(
+                texto = "Ver Programas Sociales",
+                alHacerClick = alIrACatalogo
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // boton secundario solo con linea conectado a la navegacion
-            OutlinedButton(
-                onClick = alIrAContacto,
-                modifier = Modifier.fillMaxWidth().height(50.dp)
-            ) {
-                Text("Quiero Colaborar")
-            }
+            BotonSecundario(
+                texto = "Quiero Colaborar",
+                alHacerClick = alIrAContacto
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // boton para ir al panel de estado persistente y animaciones
-            OutlinedButton(
-                onClick = alIrAEstado,
-                modifier = Modifier.fillMaxWidth().height(50.dp)
-            ) {
-                Text("Modo Colaborador (Estado)")
-            }
+            BotonSecundario(
+                texto = "Modo Colaborador (Estado)",
+                alHacerClick = alIrAEstado
+            )
         }
     }
 }
 
-// permite ver el diseño directo en android studio
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
