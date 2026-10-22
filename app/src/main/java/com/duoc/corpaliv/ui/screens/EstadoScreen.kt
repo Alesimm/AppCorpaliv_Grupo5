@@ -12,26 +12,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.duoc.corpaliv.ui.components.AppTopBar
+import com.duoc.corpaliv.ui.components.BotonSecundario
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EstadoScreen(
     alVolver: () -> Unit,
     viewModel: EstadoViewModel = viewModel()
 ) {
-    // observa el estado de activacion y del mensaje desde el viewmodel
+    // observa el estado persistente de datastore y la visibilidad del aviso
     val estado = viewModel.activo.collectAsState()
     val mostrarMensaje = viewModel.mostrarMensaje.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Preferencias Alba Lab") }
+            // usa la barra superior reutilizable
+            AppTopBar(
+                titulo = "Preferencias Alba Lab",
+                alVolver = alVolver
             )
         }
     ) { innerPadding ->
-        // si el estado aun es nulo muestra la pantalla de carga
+        // muestra el indicador circular mientras carga la preferencia desde datastore
         if (estado.value == null) {
             Box(
                 modifier = Modifier
@@ -44,14 +47,14 @@ fun EstadoScreen(
         } else {
             val estaActivo = estado.value!!
 
-            // anima el cambio de color entre verde activo y gris inactivo
+            // anima la transicion de color entre verde activo y gris inactivo
             val colorAnimado by animateColorAsState(
                 targetValue = if (estaActivo) Color(0xFF4CAF50) else Color(0xFFB0BEC5),
                 animationSpec = tween(durationMillis = 500),
                 label = ""
             )
 
-            // calcula el texto del boton usando estado derivado
+            // calcula el texto del boton usando estado derivado para optimizar recomposiciones
             val textoBoton by remember(estaActivo) {
                 derivedStateOf { if (estaActivo) "Desactivar" else "Activar" }
             }
@@ -80,7 +83,6 @@ fun EstadoScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // boton principal con color animado
                 Button(
                     onClick = { viewModel.alternarEstado() },
                     colors = ButtonDefaults.buttonColors(containerColor = colorAnimado),
@@ -96,7 +98,7 @@ fun EstadoScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // mensaje de confirmacion con aparicion animada
+                // muestra el texto de confirmacion con una animacion fluida
                 AnimatedVisibility(visible = mostrarMensaje.value) {
                     Text(
                         text = "Estado guardado exitosamente!",
@@ -107,12 +109,10 @@ fun EstadoScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                OutlinedButton(
-                    onClick = alVolver,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Volver al Inicio")
-                }
+                BotonSecundario(
+                    texto = "Volver al Inicio",
+                    alHacerClick = alVolver
+                )
             }
         }
     }

@@ -5,16 +5,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.duoc.corpaliv.ui.components.AppTopBar
+import com.duoc.corpaliv.ui.components.BotonPrincipal
+import com.duoc.corpaliv.ui.components.BotonSecundario
+import com.duoc.corpaliv.ui.utils.compartirTextoNativo
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogScreen(alVolver: () -> Unit, alIrAContacto: () -> Unit) {
-    // estructura base de la pantalla de catalogo
+    val context = LocalContext.current
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Programas Alba Lab") }
+            // usa la barra superior reutilizable con boton para volver atras
+            AppTopBar(
+                titulo = "Programas Alba Lab",
+                alVolver = alVolver
             )
         }
     ) { innerPadding ->
@@ -37,21 +44,31 @@ fun CatalogScreen(alVolver: () -> Unit, alIrAContacto: () -> Unit) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = alIrAContacto,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Quiero Colaborar")
-            }
+            // usa los botones reutilizables del paquete components
+            BotonPrincipal(
+                texto = "Quiero Colaborar",
+                alHacerClick = alIrAContacto
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedButton(
-                onClick = alVolver,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Volver al Inicio")
-            }
+            // ejecuta el recurso nativo de compartir los programas de la fundacion
+            BotonSecundario(
+                texto = "Compartir Programas",
+                alHacerClick = {
+                    compartirTextoNativo(
+                        context,
+                        "Conoce los programas de inclusión social y laboral de CORPALIV - Alba Lab."
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            BotonSecundario(
+                texto = "Volver al Inicio",
+                alHacerClick = alVolver
+            )
         }
     }
 }
