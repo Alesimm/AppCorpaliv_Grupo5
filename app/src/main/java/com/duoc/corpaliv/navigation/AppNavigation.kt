@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.duoc.corpaliv.ui.screens.CatalogScreen
 import com.duoc.corpaliv.ui.screens.ContactScreen
+import com.duoc.corpaliv.ui.screens.EstadoScreen
 import com.duoc.corpaliv.ui.screens.HomeScreen
 import com.duoc.corpaliv.ui.screens.ResumenScreen
 import com.duoc.corpaliv.viewmodel.MainViewModel
@@ -45,7 +46,8 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
         composable(Screen.Home.route) {
             HomeScreen(
                 alIrACatalogo = { mainViewModel.navegarA(Screen.Catalogo) },
-                alIrAContacto = { mainViewModel.navegarA(Screen.Contacto) }
+                alIrAContacto = { mainViewModel.navegarA(Screen.Contacto) },
+                alIrAEstado = { mainViewModel.navegarA(Screen.Estado) }
             )
         }
         composable(Screen.Catalogo.route) {
@@ -65,6 +67,11 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
             ResumenScreen(
                 viewModel = usuarioViewModel,
                 alVolverAlInicio = { mainViewModel.navegarA(Screen.Home) }
+            )
+        }
+        composable(Screen.Estado.route) {
+            EstadoScreen(
+                alVolver = { mainViewModel.volverAtras() }
             )
         }
     }

@@ -16,7 +16,8 @@ import com.duoc.corpaliv.ui.utils.obtenerWindowSizeClass
 @Composable
 fun HomeScreen(
     alIrACatalogo: () -> Unit = {},
-    alIrAContacto: () -> Unit = {}
+    alIrAContacto: () -> Unit = {},
+    alIrAEstado: () -> Unit = {}
 ) {
     // obtiene el tamaño de la pantalla actual
     val windowSizeClass = obtenerWindowSizeClass()
@@ -84,6 +85,16 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
                 Text("Quiero Colaborar")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // boton para ir al panel de estado persistente y animaciones
+            OutlinedButton(
+                onClick = alIrAEstado,
+                modifier = Modifier.fillMaxWidth().height(50.dp)
+            ) {
+                Text("Modo Colaborador (Estado)")
             }
         }
     }
