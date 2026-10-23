@@ -3,16 +3,20 @@ package com.duoc.corpaliv.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-// entidad room que define la tabla solicitudes en la base de datos sqlite del telefono
+// Define la tabla local "solicitudes" en SQLite mediante Room sin datos demo por defecto.
+// Se conecta con SolicitudDao, AppDatabase y UsuarioViewModel para persistir los envíos.
 @Entity(tableName = "solicitudes")
 data class SolicitudEntity(
-    // clave primaria que se incrementa sola con cada nuevo registro
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val folio: String,
-    val nombre: String,
-    val correo: String,
-    val direccion: String,
-    // guarda si la solicitud esta pendiente sin internet, sincronizada o en revision
-    val estadoEnvio: String
+    val folio: String = "",
+    val fecha: String = "",
+    val colaboracion: String = "",
+    val programa: String = "",
+    val nombre: String = "",
+    val correo: String = "",
+    val direccion: String = "",
+    val rutComercial: String = "",
+    val mensaje: String = "",
+    val estadoEnvio: String = ""
 )

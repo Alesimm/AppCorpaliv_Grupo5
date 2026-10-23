@@ -5,26 +5,26 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-// clase principal que crea el archivo fisico sqlite usando room
-@Database(entities = [SolicitudEntity::class], version = 1, exportSchema = false)
+// configuracion principal de la base de datos local sqlite con room
+@Database(entities = [SolicitudEntity::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
-    // conecta la base de datos con el dao de solicitudes
     abstract fun solicitudDao(): SolicitudDao
 
     companion object {
-        // evita que se abran dos conexiones al mismo tiempo en memoria
         @Volatile
         private var INSTANCIA: AppDatabase? = null
 
-        // devuelve la base de datos existente o la crea si es la primera vez
+        // devuelve la instancia unica de la base de datos o la crea si no existe
         fun obtenerBaseDatos(context: Context): AppDatabase {
             return INSTANCIA ?: synchronized(this) {
                 val instancia = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "corpaliv_alba_db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration(true)
+                    .build()
                 INSTANCIA = instancia
                 instancia
             }
