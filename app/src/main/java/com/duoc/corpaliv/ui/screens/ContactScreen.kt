@@ -280,13 +280,17 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Campo de texto para el mensaje opcional.
+            // campo de texto para el mensaje opcional con validacion visual de longitud maxima
             EtiquetaCampo("MENSAJE (OPCIONAL)")
             OutlinedTextField(
                 value = estado.mensaje,
                 onValueChange = viewModel::onMensajeChange,
                 placeholder = { Text("Cuéntanos más detalles de tu propuesta...", color = AlbaTextSecondary) },
                 minLines = 3,
+                isError = estado.errores.mensaje != null,
+                supportingText = {
+                    estado.errores.mensaje?.let { Text(text = it, color = AlbaError) }
+                },
                 shape = RoundedCornerShape(2.dp),
                 colors = coloresInputAlba(),
                 modifier = Modifier.fillMaxWidth()
