@@ -1,5 +1,8 @@
 package com.duoc.corpaliv.viewmodel
 
+// gestiona la logica de negocio de usuarios, login, formulario de contacto y sqlite room
+// se conecta con validadores, estadodatastore, solicituddao y las pantallas de la interfaz
+
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +13,13 @@ import com.duoc.corpaliv.model.ProgramaSocial
 import com.duoc.corpaliv.model.UsuarioErrores
 import com.duoc.corpaliv.model.UsuarioUiState
 import com.duoc.corpaliv.model.listaProgramasAlbaLab
+import com.duoc.corpaliv.validation.validarClave
+import com.duoc.corpaliv.validation.validarColaboracion
+import com.duoc.corpaliv.validation.validarCorreo
+import com.duoc.corpaliv.validation.validarCredencialesLogin
+import com.duoc.corpaliv.validation.validarMensaje
+import com.duoc.corpaliv.validation.validarNombre
+import com.duoc.corpaliv.validation.validarRut
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,8 +31,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// Centraliza la lógica de negocio del login, el formulario de contacto y la base de datos Room.
-// Se conecta con EstadoDataStore, SolicitudDao y las pantallas de la interfaz.
 class UsuarioViewModel(application: Application) : AndroidViewModel(application) {
 
     private val solicitudDao = AppDatabase.obtenerBaseDatos(application).solicitudDao()
@@ -41,7 +49,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        // Al iniciar el ViewModel, recupera el correo guardado en DataStore si el usuario marcó Recordarme.
+        // recupera el correo recordado desde datastore si el usuario activo la opcion
         viewModelScope.launch {
             val correoRecordado = estadoDataStore.obtenerCorreoRecordado().first()
             if (correoRecordado.isNotBlank()) {
@@ -55,17 +63,17 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Actualiza el correo escrito en el login y limpia su mensaje de error.
+    // actualiza el correo en el login y limpia el mensaje de error
     fun onCorreoLoginChange(valor: String) {
         _estado.update { it.copy(correoLogin = valor, errorLoginCorreo = null) }
     }
 
-    // Actualiza la contraseña escrita en el login y limpia su mensaje de error.
+    // actualiza la clave en el login y limpia el mensaje de error
     fun onClaveLoginChange(valor: String) {
         _estado.update { it.copy(claveLogin = valor, errorLoginClave = null) }
     }
 
-    // Cambia el estado del checkbox Recordarme y borra el correo guardado si se desmarca.
+    // actualiza la casilla recordarme y limpia datastore si se desmarca
     fun onRecordarCorreoChange(recordar: Boolean) {
         _estado.update { it.copy(recordarCorreo = recordar) }
         if (!recordar) {
@@ -75,48 +83,65 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Valida el acceso del usuario y persiste únicamente el correo en DataStore si marcó Recordarme.
+    // valida credenciales llamando a funciones puras y almacena en datastore si recordarme esta activo
     fun validarLogin(): Boolean {
         val actual = _estado.value
-        val errorCorreo = if (!actual.correoLogin.contains("@")) "Ingresa un correo válido" else null
-        val errorClave = if (actual.claveLogin.length < 8) "La contraseña debe tener mínimo 8 caracteres" else null
+        val errorCorreo = validarCorreo(actual.correoLogin)
+        val errorClave = validarClave(actual.claveLogin)
+
+        if (errorCorreo != null || errorClave != null) {
+            _estado.update {
+                it.copy(
+                    errorLoginCorreo = errorCorreo,
+                    errorLoginClave = errorClave
+                )
+            }
+            return false
+        }
+
+        // verifica contra el usuario de prueba unico del caso
+        val errorCredenciales = validarCredencialesLogin(actual.correoLogin, actual.claveLogin)
+        if (errorCredenciales != null) {
+            _estado.update {
+                it.copy(
+                    errorLoginCorreo = null,
+                    errorLoginClave = errorCredenciales
+                )
+            }
+            return false
+        }
+
+        val nombreExtraido = actual.correoLogin.substringBefore("@")
+            .replaceFirstChar { c -> c.uppercase() }
 
         _estado.update {
             it.copy(
-                errorLoginCorreo = errorCorreo,
-                errorLoginClave = errorClave
+                nombreUsuarioActivo = nombreExtraido.ifBlank { "Colaborador" },
+                correoUsuarioActivo = actual.correoLogin.trim(),
+                claveLogin = "",
+                errorLoginCorreo = null,
+                errorLoginClave = null
             )
         }
 
-        val valido = errorCorreo == null && errorClave == null
-        if (valido) {
-            val nombreExtraido = actual.correoLogin.substringBefore("@")
-                .replaceFirstChar { c -> c.uppercase() }
-            _estado.update {
-                it.copy(
-                    nombreUsuarioActivo = nombreExtraido.ifBlank { "Colaborador" },
-                    correoUsuarioActivo = actual.correoLogin,
-                    claveLogin = ""
-                )
-            }
-            viewModelScope.launch {
-                if (actual.recordarCorreo) {
-                    estadoDataStore.guardarCorreoRecordado(actual.correoLogin)
-                } else {
-                    estadoDataStore.guardarCorreoRecordado("")
-                }
+        viewModelScope.launch {
+            if (actual.recordarCorreo) {
+                estadoDataStore.guardarCorreoRecordado(actual.correoLogin.trim())
+            } else {
+                estadoDataStore.guardarCorreoRecordado("")
             }
         }
-        return valido
+
+        return true
     }
 
-    // Selecciona un programa social para ver su detalle o preseleccionarlo en el formulario.
+    // fija el programa seleccionado para ver su detalle o preseleccionarlo en el formulario
     fun seleccionarPrograma(programa: ProgramaSocial) {
         _programaSeleccionado.value = programa
         _estado.update { it.copy(programa = programa.titulo) }
     }
 
-    // Preselecciona el tipo de colaboración elegido desde la pantalla de inicio.
+    // preselecciona la modalidad de colaboracion desde la pantalla de inicio
     fun preseleccionarColaboracion(tipo: String) {
         _estado.update {
             it.copy(
@@ -126,64 +151,76 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Guarda la solicitud tocada en el perfil para mostrar su comprobante en ResumenScreen.
+    // almacena la solicitud seleccionada en el perfil para visualizar su comprobante
     fun verDetalleSolicitud(solicitud: SolicitudEntity) {
         _solicitudSeleccionada.value = solicitud
     }
 
-    // Actualiza el nombre en el formulario de contacto y limpia su error.
+    // actualiza el nombre del colaborador y limpia su mensaje de error
     fun onNombreChange(valor: String) {
         _estado.update { it.copy(nombre = valor, errores = it.errores.copy(nombre = null)) }
     }
 
-    // Actualiza el correo en el formulario de contacto y limpia su error.
+    // actualiza el correo del formulario de contacto y limpia su mensaje de error
     fun onCorreoChange(valor: String) {
         _estado.update { it.copy(correo = valor, errores = it.errores.copy(correo = null)) }
     }
 
-    // Actualiza el tipo de colaboración seleccionado y limpia su error.
+    // actualiza el tipo de colaboracion y limpia los errores vinculados
     fun onColaboracionChange(valor: String) {
-        _estado.update { it.copy(colaboracion = valor, errores = it.errores.copy(colaboracion = null)) }
+        _estado.update {
+            it.copy(
+                colaboracion = valor,
+                errores = it.errores.copy(
+                    colaboracion = null,
+                    rutComercial = if (valor != "Alianza empresarial") null else it.errores.rutComercial
+                )
+            )
+        }
     }
 
-    // Actualiza el programa seleccionado en el formulario de contacto.
+    // actualiza el programa social elegido en el formulario
     fun onProgramaFormChange(valor: String) {
         _estado.update { it.copy(programa = valor) }
     }
 
-    // Actualiza el RUT comercial de la empresa y limpia su error.
+    // actualiza el rut comercial de empresa y limpia su mensaje de error
     fun onRutComercialChange(valor: String) {
         _estado.update { it.copy(rutComercial = valor, errores = it.errores.copy(rutComercial = null)) }
     }
 
-    // Actualiza el mensaje opcional de la solicitud.
+    // actualiza el mensaje opcional de contacto y limpia su mensaje de error
     fun onMensajeChange(valor: String) {
-        _estado.update { it.copy(mensaje = valor) }
+        _estado.update { it.copy(mensaje = valor, errores = it.errores.copy(mensaje = null)) }
     }
 
-    // Revisa los campos obligatorios del formulario de contacto antes de guardar en SQLite.
+    // valida los campos del formulario de contacto mediante funciones puras desacopladas
     fun validarFormulario(): Boolean {
         val actual = _estado.value
         val pideRut = actual.colaboracion == "Alianza empresarial"
+        val errorRut = if (pideRut) validarRut(actual.rutComercial) else null
+
         val errores = UsuarioErrores(
-            nombre = if (actual.nombre.isBlank()) "Ingresa tu nombre y apellido" else null,
-            correo = if (!actual.correo.contains("@")) "Ingresa un correo válido" else null,
-            colaboracion = if (actual.colaboracion.isBlank()) "Selecciona cómo quieres ayudar" else null,
-            rutComercial = if (pideRut && actual.rutComercial.isBlank()) "Ingresa el RUT comercial" else null
+            nombre = validarNombre(actual.nombre),
+            correo = validarCorreo(actual.correo),
+            colaboracion = validarColaboracion(actual.colaboracion),
+            rutComercial = errorRut,
+            mensaje = validarMensaje(actual.mensaje)
         )
 
         val hayErrores = listOfNotNull(
             errores.nombre,
             errores.correo,
             errores.colaboracion,
-            errores.rutComercial
+            errores.rutComercial,
+            errores.mensaje
         ).isNotEmpty()
 
         _estado.update { it.copy(errores = errores) }
         return !hayErrores
     }
 
-    // Inserta una nueva solicitud en la tabla SQLite de Room según el estado de la conexión.
+    // registra una nueva solicitud en room asignando estado segun conexion a internet
     fun guardarEnSqlite(hayInternet: Boolean) {
         val actual = _estado.value
         val numeroFolio = (1000..9999).random()
@@ -210,7 +247,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Pasa las solicitudes pendientes a estado RECIBIDA cuando se restablece la red.
+    // actualiza a estado recibida las solicitudes guardadas sin conexion previa
     fun sincronizarPendientes() {
         viewModelScope.launch {
             solicitudDao.sincronizarPendientes()
@@ -222,7 +259,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Elimina una solicitud de la base de datos local SQLite Room.
+    // remueve una solicitud almacenada en la base de datos sqlite
     fun eliminarSolicitud(solicitud: SolicitudEntity) {
         viewModelScope.launch {
             solicitudDao.eliminarSolicitud(solicitud)
