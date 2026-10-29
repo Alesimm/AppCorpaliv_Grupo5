@@ -5,29 +5,32 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
+import android.widget.Toast
 
-// recurso nativo 1: consulta al sistema android si hay conexion activa a internet
+// recurso nativo 1: consulta al sistema si hay conexion activa a internet
 fun hayConexionInternet(context: Context): Boolean {
-    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val redActiva = connectivityManager.activeNetwork ?: return false
-    val capacidades = connectivityManager.getNetworkCapabilities(redActiva) ?: return false
-    return capacidades.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val cap = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+    return cap.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 }
 
-// recurso nativo 2: abre la app de telefono del dispositivo con el numero listo para llamar
+// recurso nativo 2: abre el marcador telefonico con proteccion ante dispositivos sin app de llamadas
 fun llamarPorTelefono(context: Context, numero: String) {
-    val intent = Intent(Intent.ACTION_DIAL).apply {
-        data = Uri.parse("tel:$numero")
+    try {
+        val intent = Intent(Intent.ACTION_DIAL).apply {
+            data = Uri.parse("tel:$numero")
+        }
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(context, "no hay aplicacion para realizar llamadas", Toast.LENGTH_SHORT).show()
     }
-    context.startActivity(intent)
 }
 
-// recurso nativo 3: abre el menu nativo de android para compartir texto por whatsapp o correo
+// recurso nativo 3: abre el menu nativo para compartir informacion por mensaje o redes
 fun compartirTextoNativo(context: Context, texto: String) {
-    val enviarIntent = Intent(Intent.ACTION_SEND).apply {
-        putExtra(Intent.EXTRA_TEXT, texto)
+    val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, texto)
     }
-    val selector = Intent.createChooser(enviarIntent, "Compartir información de CORPALIV")
-    context.startActivity(selector)
+    context.startActivity(Intent.createChooser(intent, "Compartir información de CORPALIV"))
 }
