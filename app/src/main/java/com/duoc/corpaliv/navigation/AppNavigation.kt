@@ -54,18 +54,29 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
         mainViewModel.navigationEvents.collect { evento ->
             when (evento) {
                 is NavigationEvent.NavigateTo -> {
-                    navController.navigate(evento.screen.route) {
-                        launchSingleTop = true
+                    if (evento.screen == Screen.Home) {
+                        if (!navController.popBackStack(Screen.Home.route, false)) {
+                            navController.navigate(Screen.Home.route) { launchSingleTop = true }
+                        }
+                    } else {
+                        navController.navigate(evento.screen.route) {
+                            launchSingleTop = true
+                        }
                     }
                 }
-                // popupto con savestate para preservar el scroll y estado de cada pestana inferior
+                // navegacion de barra inferior con retorno directo a home sin retener pantallas intermedias
                 is NavigationEvent.NavigateBottom -> {
-                    navController.navigate(evento.screen.route) {
-                        popUpTo(Screen.Home.route) {
-                            saveState = true
+                    if (evento.screen == Screen.Home) {
+                        if (!navController.popBackStack(Screen.Home.route, false)) {
+                            navController.navigate(Screen.Home.route) { launchSingleTop = true }
                         }
-                        launchSingleTop = true
-                        restoreState = true
+                    } else {
+                        navController.navigate(evento.screen.route) {
+                            popUpTo(Screen.Home.route) {
+                                inclusive = false
+                            }
+                            launchSingleTop = true
+                        }
                     }
                 }
                 // popupto inclusive para remover el login del historial al entrar al home

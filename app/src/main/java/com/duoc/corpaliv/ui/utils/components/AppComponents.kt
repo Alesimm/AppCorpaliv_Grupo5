@@ -152,7 +152,7 @@ fun AppBottomBar(
             ItemBarraInferior(
                 etiqueta = "CATÁLOGO",
                 icono = Icons.Default.GridView,
-                seleccionado = rutaActual == Screen.Catalogo.route || rutaActual == Screen.Favoritos.route,
+                seleccionado = rutaActual == Screen.Catalogo.route,
                 alHacerClick = { alNavegar(Screen.Catalogo) }
             )
             ItemBarraInferior(
