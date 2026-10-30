@@ -29,6 +29,17 @@ class EstadoViewModel(application: Application) : AndroidViewModel(application) 
     val favoritos: StateFlow<Set<String>> = estadoDataStore.obtenerFavoritos()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf("taller_oficios"))
 
+    // flujo reactivo con la preferencia del tema visual oscuro o claro (por defecto modo claro)
+    val esTemaOscuro: StateFlow<Boolean> = estadoDataStore.obtenerTemaOscuro()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    // alterna entre tema claro y tema oscuro y persiste la eleccion en datastore
+    fun alternarTema() {
+        viewModelScope.launch {
+            estadoDataStore.guardarTemaOscuro(!esTemaOscuro.value)
+        }
+    }
+
     init {
         cargarEstado()
     }

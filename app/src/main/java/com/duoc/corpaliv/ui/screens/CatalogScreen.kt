@@ -33,6 +33,7 @@ import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
+import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 
 // pantalla 4 catalogo de programas sociales y vista filtrada de mis favoritos
@@ -116,8 +117,9 @@ private fun TarjetaCatalogoMockup(
     alAlternarFavorito: () -> Unit,
     alAbrirDetalle: () -> Unit
 ) {
+    val esOscuro = LocalEsTemaOscuro.current
     val esCapacitacion = programa.id == "taller_oficios"
-    val colorIlustracion = if (esCapacitacion) Color(0xFF2B2118) else Color(0xFF1E2936)
+    val colorIlustracion = if (esOscuro) (if (esCapacitacion) Color(0xFF2B2118) else Color(0xFF1E2936)) else AlbaCard
 
     Card(
         shape = RoundedCornerShape(2.dp),

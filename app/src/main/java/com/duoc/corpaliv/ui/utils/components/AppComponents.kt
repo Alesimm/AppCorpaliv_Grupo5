@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +38,8 @@ import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
+import com.duoc.corpaliv.ui.theme.LocalAlternarTema
+import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 
 // barra superior del mockup con icono de menu lateral, titulo espaciado y avatar de perfil
 @Composable
@@ -105,11 +109,12 @@ fun AvatarColaborador(
     tamano: Int = 36,
     alHacerClick: (() -> Unit)? = null
 ) {
+    val esOscuro = LocalEsTemaOscuro.current
     Box(
         modifier = Modifier
             .size(tamano.dp)
             .clip(CircleShape)
-            .background(Color(0xFF3A332C))
+            .background(if (esOscuro) Color(0xFF3A332C) else Color(0xFFF2E6DF))
             .border(1.dp, AlbaBorder, CircleShape)
             .then(if (alHacerClick != null) Modifier.clickable { alHacerClick() } else Modifier),
         contentAlignment = Alignment.Center
@@ -117,7 +122,7 @@ fun AvatarColaborador(
         Icon(
             imageVector = Icons.Default.Person,
             contentDescription = "Perfil",
-            tint = Color(0xFFD7B19D),
+            tint = if (esOscuro) Color(0xFFD7B19D) else Color(0xFF8D6853),
             modifier = Modifier.size((tamano * 0.6f).dp)
         )
     }
@@ -274,6 +279,15 @@ fun AppDrawerContent(
                 texto = "Acerca de CORPALIV",
                 icono = Icons.Default.Info,
                 alHacerClick = alIrAAcercaDe
+            )
+            HorizontalDivider(color = AlbaBorder)
+
+            val esOscuroDrawer = LocalEsTemaOscuro.current
+            val alAlternarTemaDrawer = LocalAlternarTema.current
+            ItemMenuLateral(
+                texto = if (esOscuroDrawer) "Cambiar a Modo Claro" else "Cambiar a Modo Oscuro",
+                icono = if (esOscuroDrawer) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
+                alHacerClick = alAlternarTemaDrawer
             )
             HorizontalDivider(color = AlbaBorder)
 

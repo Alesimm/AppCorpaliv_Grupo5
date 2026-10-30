@@ -18,6 +18,7 @@ class EstadoDataStore(private val context: Context) {
     private val ESTADO_ACTIVADO = booleanPreferencesKey("modo_activado")
     private val FAVORITOS_GUARDADOS = stringSetPreferencesKey("programas_favoritos")
     private val CORREO_RECORDADO = stringPreferencesKey("correo_recordado")
+    private val TEMA_OSCURO = booleanPreferencesKey("tema_oscuro")
 
     // Guarda en el teléfono si el modo colaborador está activo o inactivo.
     suspend fun guardarEstado(valor: Boolean) {
@@ -67,6 +68,20 @@ class EstadoDataStore(private val context: Context) {
     fun obtenerCorreoRecordado(): Flow<String> {
         return context.dataStore.data.map { preferencias ->
             preferencias[CORREO_RECORDADO] ?: ""
+        }
+    }
+
+    // Guarda la preferencia de tema oscuro (true) o claro (false).
+    suspend fun guardarTemaOscuro(oscuro: Boolean) {
+        context.dataStore.edit { preferencias ->
+            preferencias[TEMA_OSCURO] = oscuro
+        }
+    }
+
+    // Devuelve un flujo reactivo con la preferencia de tema visual (por defecto falso: modo claro institucional).
+    fun obtenerTemaOscuro(): Flow<Boolean> {
+        return context.dataStore.data.map { preferencias ->
+            preferencias[TEMA_OSCURO] ?: false
         }
     }
 }

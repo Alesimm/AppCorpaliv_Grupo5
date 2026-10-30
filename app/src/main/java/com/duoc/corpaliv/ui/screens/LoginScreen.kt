@@ -1,5 +1,7 @@
 package com.duoc.corpaliv.ui.screens
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,6 +36,7 @@ import com.duoc.corpaliv.ui.theme.AlbaGreen
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
+import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
 // pantalla inicial de login que muestra el logo institucional y valida el acceso del usuario
@@ -45,6 +48,7 @@ fun LoginScreen(
 ) {
     // observa en tiempo real los datos del formulario y los mensajes de error desde el viewmodel
     val estado by viewModel.estado.collectAsState()
+    val esOscuro = LocalEsTemaOscuro.current
 
     // estados locales de interfaz para mostrar u ocultar la clave y abrir el dialogo de recuperacion
     var mostrarClave by remember { mutableStateOf(false) }
@@ -152,19 +156,25 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // cabecera centrada con el logo oficial mas grande sobre el fondo negro
+        // cabecera centrada con el logo oficial reactivo al modo claro u oscuro
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_corpaliv_oscuro),
-                contentDescription = "Logo Fundación CORPALIV",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .width(285.dp)
-                    .heightIn(min = 100.dp)
-            )
+            Crossfade(
+                targetState = if (esOscuro) R.drawable.logo_corpaliv_oscuro else R.drawable.logo_corpaliv_claro,
+                animationSpec = tween(350),
+                label = "cambioLogo"
+            ) { logoId ->
+                Image(
+                    painter = painterResource(id = logoId),
+                    contentDescription = "Logo Fundación CORPALIV",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .width(285.dp)
+                        .heightIn(min = 100.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
