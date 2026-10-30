@@ -34,6 +34,8 @@ import com.duoc.corpaliv.model.listaProgramasAlbaLab
 import com.duoc.corpaliv.navigation.Screen
 import com.duoc.corpaliv.ui.components.AppBottomBar
 import com.duoc.corpaliv.ui.components.AppTopBar
+import com.duoc.corpaliv.ui.components.EtiquetaCategoriaPrograma
+import com.duoc.corpaliv.ui.components.IlustracionPrograma
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
@@ -194,67 +196,43 @@ private fun TarjetaProgramaDestacado(
     programa: ProgramaSocial,
     alHacerClick: () -> Unit
 ) {
-    val esOscuro = LocalEsTemaOscuro.current
-    val esCapacitacion = programa.id == "taller_oficios"
-    val colorSuperior = if (esOscuro) (if (esCapacitacion) Color(0xFF2B2118) else Color(0xFF1F2B38)) else AlbaCard
-
     Box(
         modifier = Modifier
             .width(230.dp)
             .height(210.dp)
+            .background(AlbaCard, RoundedCornerShape(2.dp))
             .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
-            .background(
-                Brush.verticalGradient(listOf(colorSuperior, AlbaCard)),
-                RoundedCornerShape(2.dp)
-            )
             .clickable { alHacerClick() }
-            .padding(16.dp)
     ) {
-        if (esCapacitacion) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .align(Alignment.CenterEnd)
-                    .background(Color(0xFFD69A52), CircleShape)
-                    .border(5.dp, Color(0xFF9C692E), CircleShape)
-            )
-        } else {
-            Row(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                repeat(2) {
-                    Box(
-                        modifier = Modifier
-                            .size(22.dp)
-                            .background(Color(0xFFC29B78), CircleShape)
-                    )
-                }
-            }
-        }
+        // ilustracion vectorial de las sonrisas del logo en los 150 dp superiores con compensacion para la etiqueta
+        IlustracionPrograma(
+            idPrograma = programa.id,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp),
+            escala = if (programa.id == "autonomia_transicion") 0.74f else 0.80f,
+            desplazamientoX = 18.dp,
+            desplazamientoY = 8.dp
+        )
 
-        // etiqueta naranja superior
-        Box(
+        // etiqueta de categoria en la esquina superior izquierda
+        EtiquetaCategoriaPrograma(
+            idPrograma = programa.id,
+            categoria = programa.categoria,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .background(AlbaOrange, RoundedCornerShape(2.dp))
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = programa.categoria,
-                color = AlbaBlack,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 1.sp
-            )
-        }
+                .padding(14.dp)
+        )
 
+        // titulo del programa en la parte inferior izquierda
         Text(
             text = programa.titulo,
             color = AlbaWhite,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Black,
-            modifier = Modifier.align(Alignment.BottomStart)
+            fontSize = 19.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(14.dp)
         )
     }
 }
