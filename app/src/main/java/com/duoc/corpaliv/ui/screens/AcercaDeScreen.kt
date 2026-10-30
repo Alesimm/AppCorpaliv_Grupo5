@@ -20,6 +20,7 @@ import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaOrange
+import com.duoc.corpaliv.ui.theme.AlbaPurple
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.utils.llamarPorTelefono
@@ -83,7 +84,7 @@ fun AcercaDeScreen(
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text(
                         text = "EDUCACIÓN ESPECIAL",
-                        color = AlbaOrange,
+                        color = AlbaPurple,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.5.sp

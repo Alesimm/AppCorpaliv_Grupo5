@@ -33,10 +33,12 @@ import kotlinx.coroutines.launch
 
 // gestiona la navegacion global de la aplicacion y el ciclo de vida del back stack
 @Composable
-fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
+fun AppNavigation(
+    mainViewModel: MainViewModel = viewModel(),
+    estadoViewModel: EstadoViewModel = viewModel()
+) {
     val navController = rememberNavController()
     val usuarioViewModel: UsuarioViewModel = viewModel()
-    val estadoViewModel: EstadoViewModel = viewModel()
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()

@@ -40,6 +40,7 @@ import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
+import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 import com.duoc.corpaliv.ui.utils.obtenerWindowSizeClass
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
@@ -193,8 +194,9 @@ private fun TarjetaProgramaDestacado(
     programa: ProgramaSocial,
     alHacerClick: () -> Unit
 ) {
+    val esOscuro = LocalEsTemaOscuro.current
     val esCapacitacion = programa.id == "taller_oficios"
-    val colorSuperior = if (esCapacitacion) Color(0xFF2B2118) else Color(0xFF1F2B38)
+    val colorSuperior = if (esOscuro) (if (esCapacitacion) Color(0xFF2B2118) else Color(0xFF1F2B38)) else AlbaCard
 
     Box(
         modifier = Modifier
