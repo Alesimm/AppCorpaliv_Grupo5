@@ -2,8 +2,8 @@ package com.duoc.corpaliv.model
 
 import com.duoc.corpaliv.validation.CredencialesPrueba
 
-// Representa el estado inmutable del login, la sesión activa y el formulario de contacto.
-// Se conecta con UsuarioViewModel y es observado por LoginScreen, HomeScreen, ContactScreen y PerfilScreen.
+// estructura inmutable que agrupa el estado de autenticacion y el formulario de contacto
+// se conecta con usuarioviewmodel y es observada por loginscreen, homescreen, contactscreen y perfilscreen
 data class UsuarioUiState(
     val correoLogin: String = CredencialesPrueba.CORREO,
     val claveLogin: String = CredencialesPrueba.CLAVE,
@@ -14,12 +14,9 @@ data class UsuarioUiState(
     val correoUsuarioActivo: String = "",
     val nombre: String = "",
     val correo: String = "",
-    val clave: String = "",
-    val direccion: String = "",
     val colaboracion: String = "",
     val programa: String = "",
     val rutComercial: String = "",
     val mensaje: String = "",
-    val aceptaTerminos: Boolean = false,
     val errores: UsuarioErrores = UsuarioErrores()
 )

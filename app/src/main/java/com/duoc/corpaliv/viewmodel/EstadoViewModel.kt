@@ -44,13 +44,14 @@ class EstadoViewModel(application: Application) : AndroidViewModel(application) 
         cargarEstado()
     }
 
+    // carga el estado de notificaciones inmediatamente desde datastore sin demoras artificiales
     fun cargarEstado() {
         viewModelScope.launch {
-            delay(1500)
             _activo.value = estadoDataStore.obtenerEstado().first() ?: false
         }
     }
 
+    // alterna la preferencia de notificaciones y muestra el mensaje de confirmacion
     fun alternarEstado() {
         viewModelScope.launch {
             val nuevoValor = !(_activo.value ?: false)
