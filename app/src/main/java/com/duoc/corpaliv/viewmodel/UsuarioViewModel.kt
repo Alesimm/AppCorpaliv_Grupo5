@@ -13,6 +13,7 @@ import com.duoc.corpaliv.model.ProgramaSocial
 import com.duoc.corpaliv.model.UsuarioErrores
 import com.duoc.corpaliv.model.UsuarioUiState
 import com.duoc.corpaliv.model.listaProgramasAlbaLab
+import com.duoc.corpaliv.validation.CredencialesPrueba
 import com.duoc.corpaliv.validation.validarClave
 import com.duoc.corpaliv.validation.validarColaboracion
 import com.duoc.corpaliv.validation.validarCorreo
@@ -118,7 +119,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             it.copy(
                 nombreUsuarioActivo = nombreExtraido.ifBlank { "Colaborador" },
                 correoUsuarioActivo = actual.correoLogin.trim(),
-                claveLogin = "",
+                claveLogin = actual.claveLogin,
                 errorLoginCorreo = null,
                 errorLoginClave = null
             )
@@ -272,9 +273,10 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
     // reinicia la sesion activa y limpia formularios preservando el correo si eligio recordarme
     fun cerrarSesion() {
         val recordar = _estado.value.recordarCorreo
-        val correo = if (recordar) _estado.value.correoLogin else ""
+        val correo = if (recordar) _estado.value.correoLogin else CredencialesPrueba.CORREO
         _estado.value = UsuarioUiState(
             correoLogin = correo,
+            claveLogin = CredencialesPrueba.CLAVE,
             recordarCorreo = recordar
         )
         _solicitudSeleccionada.value = null

@@ -62,7 +62,7 @@ fun CatalogScreen(
         },
         bottomBar = {
             AppBottomBar(
-                rutaActual = Screen.Catalogo.route,
+                rutaActual = if (soloFavoritos) Screen.Favoritos.route else Screen.Catalogo.route,
                 alNavegar = alNavegarBottom
             )
         },
