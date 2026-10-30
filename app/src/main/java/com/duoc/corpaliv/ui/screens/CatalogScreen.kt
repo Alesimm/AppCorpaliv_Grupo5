@@ -27,6 +27,8 @@ import com.duoc.corpaliv.model.listaProgramasAlbaLab
 import com.duoc.corpaliv.navigation.Screen
 import com.duoc.corpaliv.ui.components.AppBottomBar
 import com.duoc.corpaliv.ui.components.AppTopBar
+import com.duoc.corpaliv.ui.components.EtiquetaCategoriaPrograma
+import com.duoc.corpaliv.ui.components.IlustracionPrograma
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
@@ -118,8 +120,7 @@ private fun TarjetaCatalogoMockup(
     alAbrirDetalle: () -> Unit
 ) {
     val esOscuro = LocalEsTemaOscuro.current
-    val esCapacitacion = programa.id == "taller_oficios"
-    val colorIlustracion = if (esOscuro) (if (esCapacitacion) Color(0xFF2B2118) else Color(0xFF1E2936)) else AlbaCard
+    val colorCorazon = if (esFavorito) (if (esOscuro) AlbaWhite else Color(0xFF121212)) else AlbaTextSecondary
 
     Card(
         shape = RoundedCornerShape(2.dp),
@@ -130,72 +131,42 @@ private fun TarjetaCatalogoMockup(
             .clickable { alAbrirDetalle() }
     ) {
         Column {
-            // cabecera grafica con etiqueta de categoria y boton de corazon
+            // cabecera con ilustracion vectorial de las sonrisas del logo
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(160.dp)
-                    .background(
-                        Brush.verticalGradient(listOf(colorIlustracion, AlbaCard))
-                    )
-                    .padding(14.dp)
+                    .background(AlbaCard)
             ) {
-                if (esCapacitacion) {
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .align(Alignment.CenterEnd)
-                            .offset(x = (-24).dp)
-                            .background(Color(0xFFD69A52), CircleShape)
-                            .border(5.dp, Color(0xFF9C692E), CircleShape)
-                    )
-                } else {
-                    Row(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalArrangement = Arrangement.spacedBy(18.dp)
-                    ) {
-                        repeat(3) {
-                            Box(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .background(Color(0xFFC29B78), CircleShape)
-                            )
-                        }
-                    }
-                }
+                IlustracionPrograma(
+                    idPrograma = programa.id,
+                    modifier = Modifier.fillMaxSize(),
+                    escala = if (programa.id == "autonomia_transicion") 0.85f else 0.92f
+                )
 
-                // etiqueta superior izquierda
-                Box(
+                // etiqueta de categoria superior izquierda
+                EtiquetaCategoriaPrograma(
+                    idPrograma = programa.id,
+                    categoria = programa.categoria,
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .background(AlbaBlack.copy(alpha = 0.8f))
-                        .border(1.dp, AlbaBorder)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = programa.categoria,
-                        color = AlbaWhite,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                }
+                        .padding(14.dp)
+                )
 
-                // boton de corazon superior derecho conectado a datastore
+                // boton de corazon superior derecho conectado con datastore
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(44.dp)
                         .align(Alignment.TopEnd)
-                        .background(if (esFavorito) AlbaOrange else AlbaBlack.copy(alpha = 0.7f))
-                        .border(1.dp, if (esFavorito) AlbaOrange else AlbaBorder)
+                        .padding(top = 10.dp, end = 10.dp)
                         .clickable { alAlternarFavorito() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = if (esFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Guardar en favoritos",
-                        tint = if (esFavorito) AlbaBlack else AlbaWhite,
-                        modifier = Modifier.size(18.dp)
+                        contentDescription = if (esFavorito) "Quitar de favoritos" else "Guardar en favoritos",
+                        tint = colorCorazon,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }

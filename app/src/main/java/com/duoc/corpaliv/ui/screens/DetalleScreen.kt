@@ -28,12 +28,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.duoc.corpaliv.ui.components.BotonPrincipal
+import com.duoc.corpaliv.ui.components.colorDelPrograma
+import com.duoc.corpaliv.ui.components.IlustracionPrograma
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
+import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 import com.duoc.corpaliv.ui.utils.compartirTextoNativo
 import com.duoc.corpaliv.ui.utils.llamarPorTelefono
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
@@ -50,6 +53,9 @@ fun DetalleScreen(
     val programa by usuarioViewModel.programaSeleccionado.collectAsState()
     val favoritos by estadoViewModel.favoritos.collectAsState()
     val esFavorito = favoritos.contains(programa.id)
+    val esOscuro = LocalEsTemaOscuro.current
+    val colorProg = colorDelPrograma(programa.id)
+    val colorCorazon = if (esFavorito) (if (esOscuro) AlbaWhite else Color(0xFF121212)) else AlbaTextSecondary
     val context = LocalContext.current
 
     Scaffold(
@@ -80,38 +86,34 @@ fun DetalleScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            // cabecera ilustrada con boton volver y corazon de favorito
+            // cabecera ilustrada con el 18% del color del programa segun el mockup oficial
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(240.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color(0xFF2D2013), AlbaBlack)
-                        )
-                    )
-                    .padding(20.dp)
+                    .background(colorProg.copy(alpha = 0.18f))
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .align(Alignment.CenterEnd)
-                        .offset(x = (-24).dp, y = (-10).dp)
-                        .background(Color(0xFFD6934A), CircleShape)
+                // ilustracion vectorial de las sonrisas del logo a escala ampliada con holgura para la barra superior
+                IlustracionPrograma(
+                    idPrograma = programa.id,
+                    modifier = Modifier.fillMaxSize(),
+                    escala = if (programa.id == "autonomia_transicion") 1.05f else 1.15f,
+                    desplazamientoY = 16.dp
                 )
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .statusBarsPadding(),
+                        .statusBarsPadding()
+                        .padding(20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
                             .size(42.dp)
-                            .background(AlbaBlack.copy(alpha = 0.7f))
-                            .border(1.dp, AlbaBorder)
+                            .background(AlbaCard, RoundedCornerShape(2.dp))
+                            .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
                             .clickable { alVolver() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -125,15 +127,15 @@ fun DetalleScreen(
                     Box(
                         modifier = Modifier
                             .size(42.dp)
-                            .background(if (esFavorito) AlbaOrange else AlbaBlack.copy(alpha = 0.7f))
-                            .border(1.dp, if (esFavorito) AlbaOrange else AlbaBorder)
+                            .background(AlbaCard, RoundedCornerShape(2.dp))
+                            .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
                             .clickable { estadoViewModel.alternarFavorito(programa.id) },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (esFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorito",
-                            tint = if (esFavorito) AlbaBlack else AlbaWhite,
+                            contentDescription = if (esFavorito) "Quitar de favoritos" else "Favorito",
+                            tint = colorCorazon,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -142,9 +144,20 @@ fun DetalleScreen(
 
             // cuerpo con informacion, botones nativos llamar/difundir e impacto
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                val colorCategoria = if (esOscuro) {
+                    colorProg
+                } else {
+                    when (programa.id) {
+                        "taller_oficios" -> Color(0xFFA36800)
+                        "insercion_laboral" -> Color(0xFF138A4F)
+                        "autonomia_transicion" -> Color(0xFF5E4FA7)
+                        else -> AlbaOrange
+                    }
+                }
+
                 Text(
                     text = programa.categoria.uppercase(),
-                    color = AlbaOrange,
+                    color = colorCategoria,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp
