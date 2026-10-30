@@ -1,5 +1,9 @@
 package com.duoc.corpaliv.navigation
 
+// enrutador central con navegacion por eventos, control de back stack y menu lateral
+// se conecta con mainviewmodel, usuarioviewmodel, estadodatastore, screen y las 9 pantallas
+
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
@@ -27,7 +31,7 @@ import com.duoc.corpaliv.viewmodel.MainViewModel
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 import kotlinx.coroutines.launch
 
-// enrutador central que conecta las 9 pantallas del mockup con el menu lateral desplegable
+// gestiona la navegacion global de la aplicacion y el ciclo de vida del back stack
 @Composable
 fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
     val navController = rememberNavController()
@@ -40,12 +44,46 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route ?: Screen.Login.route
 
-    // recolecta los eventos de navegacion emitidos por el mainviewmodel
+    // cierra el menu lateral con el boton atras en lugar de salir de la aplicacion
+    BackHandler(enabled = drawerState.isOpen) {
+        scope.launch { drawerState.close() }
+    }
+
+    // recolecta ordenes de navegacion desacopladas y gestiona popupto y guardado de estado
     LaunchedEffect(Unit) {
         mainViewModel.navigationEvents.collect { evento ->
             when (evento) {
                 is NavigationEvent.NavigateTo -> {
                     navController.navigate(evento.screen.route) {
+                        launchSingleTop = true
+                    }
+                }
+                // popupto con savestate para preservar el scroll y estado de cada pestana inferior
+                is NavigationEvent.NavigateBottom -> {
+                    navController.navigate(evento.screen.route) {
+                        popUpTo(Screen.Home.route) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+                // popupto inclusive para remover el login del historial al entrar al home
+                is NavigationEvent.LoginExitoso -> {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+                // vacia el back stack por completo y regresa a login reiniciando sesion
+                is NavigationEvent.CerrarSesion -> {
+                    usuarioViewModel.cerrarSesion()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) {
+                            inclusive = true
+                        }
                         launchSingleTop = true
                     }
                 }
@@ -76,7 +114,12 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
                 alIrAFavoritos = { cerrarMenuYNavegar(Screen.Favoritos) },
                 alIrAConfiguracion = { cerrarMenuYNavegar(Screen.Estado) },
                 alIrAAcercaDe = { cerrarMenuYNavegar(Screen.AcercaDe) },
-                alCerrarSesion = { cerrarMenuYNavegar(Screen.Login) }
+                alCerrarSesion = {
+                    scope.launch {
+                        drawerState.close()
+                        mainViewModel.cerrarSesion()
+                    }
+                }
             )
         }
     ) {
@@ -87,7 +130,7 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
             composable(Screen.Login.route) {
                 LoginScreen(
                     viewModel = usuarioViewModel,
-                    alIngresar = { mainViewModel.navegarA(Screen.Home) }
+                    alIngresar = { mainViewModel.ingresarAlHome() }
                 )
             }
 
@@ -104,7 +147,7 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
                         usuarioViewModel.preseleccionarColaboracion(tipo)
                         mainViewModel.navegarA(Screen.Contacto)
                     },
-                    alNavegarBottom = { destino -> mainViewModel.navegarA(destino) }
+                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
                 )
             }
 
@@ -118,7 +161,7 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
                         usuarioViewModel.seleccionarPrograma(programa)
                         mainViewModel.navegarA(Screen.Detalle)
                     },
-                    alNavegarBottom = { destino -> mainViewModel.navegarA(destino) }
+                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
                 )
             }
 
@@ -132,7 +175,7 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
                         usuarioViewModel.seleccionarPrograma(programa)
                         mainViewModel.navegarA(Screen.Detalle)
                     },
-                    alNavegarBottom = { destino -> mainViewModel.navegarA(destino) }
+                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
                 )
             }
 
@@ -151,7 +194,7 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
                     alIrAResumen = { mainViewModel.navegarA(Screen.Resumen) },
                     alAbrirMenu = abrirMenu,
                     alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alNavegarBottom = { destino -> mainViewModel.navegarA(destino) }
+                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
                 )
             }
 
@@ -161,7 +204,7 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
                     alIrAInicio = { mainViewModel.navegarA(Screen.Home) },
                     alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
                     alAbrirMenu = abrirMenu,
-                    alNavegarBottom = { destino -> mainViewModel.navegarA(destino) }
+                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
                 )
             }
 
@@ -169,7 +212,7 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
                 AcercaDeScreen(
                     alAbrirMenu = abrirMenu,
                     alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alNavegarBottom = { destino -> mainViewModel.navegarA(destino) }
+                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
                 )
             }
 
@@ -180,7 +223,7 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
                     alAbrirMenu = abrirMenu,
                     alVerSolicitud = { mainViewModel.navegarA(Screen.Resumen) },
                     alIrAFavoritos = { mainViewModel.navegarA(Screen.Favoritos) },
-                    alNavegarBottom = { destino -> mainViewModel.navegarA(destino) }
+                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
                 )
             }
 
@@ -189,7 +232,7 @@ fun AppNavigation(mainViewModel: MainViewModel = viewModel()) {
                     alVolver = { mainViewModel.navegarA(Screen.Home) },
                     alAbrirMenu = abrirMenu,
                     alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alNavegarBottom = { destino -> mainViewModel.navegarA(destino) },
+                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) },
                     viewModel = estadoViewModel
                 )
             }

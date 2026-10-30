@@ -220,31 +220,64 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         return !hayErrores
     }
 
-    // registra una nueva solicitud en room asignando estado segun conexion a internet
-    fun guardarEnSqlite(hayInternet: Boolean) {
+    // registra una nueva solicitud en room con folio correlativo y limpia el formulario
+    fun guardarEnSqlite(hayInternet: Boolean, onGuardado: () -> Unit = {}) {
         val actual = _estado.value
-        val numeroFolio = (1000..9999).random()
-        val folioGenerado = "AL-2026-$numeroFolio"
         val fechaHoy = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
         val estadoInicial = if (hayInternet) "RECIBIDA" else "PENDIENTE SIN RED"
 
-        val nuevaSolicitud = SolicitudEntity(
-            folio = folioGenerado,
+        val solicitudInicial = SolicitudEntity(
+            folio = "",
             fecha = fechaHoy,
             colaboracion = actual.colaboracion,
             programa = actual.programa.ifBlank { listaProgramasAlbaLab.first().titulo },
             nombre = actual.nombre,
             correo = actual.correo,
+            direccion = "",
             rutComercial = if (actual.rutComercial.isBlank()) "No aplica" else actual.rutComercial,
             mensaje = if (actual.mensaje.isBlank()) "Sin mensaje adicional." else actual.mensaje,
             estadoEnvio = estadoInicial
         )
 
-        _solicitudSeleccionada.value = nuevaSolicitud
-
         viewModelScope.launch {
-            solicitudDao.insertarSolicitud(nuevaSolicitud)
+            // guarda en room y toma el id generado para formatear un folio correlativo unico
+            val nuevoId = solicitudDao.insertarSolicitud(solicitudInicial)
+            val folioGenerado = String.format(Locale.getDefault(), "AL-2026-%04d", nuevoId)
+            val solicitudFinal = solicitudInicial.copy(id = nuevoId.toInt(), folio = folioGenerado)
+            solicitudDao.actualizarSolicitud(solicitudFinal)
+            _solicitudSeleccionada.value = solicitudFinal
+
+            // limpia el formulario tras el envio para evitar datos pegados
+            limpiarFormularioContacto()
+
+            onGuardado()
         }
+    }
+
+    // limpia los campos del formulario de contacto tras un envio exitoso
+    fun limpiarFormularioContacto() {
+        _estado.update {
+            it.copy(
+                nombre = "",
+                correo = "",
+                colaboracion = "",
+                programa = "",
+                rutComercial = "",
+                mensaje = "",
+                errores = UsuarioErrores()
+            )
+        }
+    }
+
+    // reinicia la sesion activa y limpia formularios preservando el correo si eligio recordarme
+    fun cerrarSesion() {
+        val recordar = _estado.value.recordarCorreo
+        val correo = if (recordar) _estado.value.correoLogin else ""
+        _estado.value = UsuarioUiState(
+            correoLogin = correo,
+            recordarCorreo = recordar
+        )
+        _solicitudSeleccionada.value = null
     }
 
     // actualiza a estado recibida las solicitudes guardadas sin conexion previa

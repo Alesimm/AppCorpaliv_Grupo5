@@ -1,5 +1,8 @@
 package com.duoc.corpaliv.ui.screens
 
+// pantalla del formulario de colaboracion con validacion reactiva y persistencia en room
+// se conecta con usuarioviewmodel, screen, apptopbar, appbottombar y nativeutils
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,20 +29,16 @@ import com.duoc.corpaliv.model.listaProgramasAlbaLab
 import com.duoc.corpaliv.navigation.Screen
 import com.duoc.corpaliv.ui.components.AppBottomBar
 import com.duoc.corpaliv.ui.components.AppTopBar
-import com.duoc.corpaliv.ui.components.TarjetaContactoDesplegable
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaError
-import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.utils.hayConexionInternet
-import com.duoc.corpaliv.ui.utils.llamarPorTelefono
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// Pantalla del formulario de vinculación con validación reactiva, campo condicional y guardado en Room.
-// Se conecta con UsuarioViewModel, NativeUtils (estado de red y llamadas) y ResumenScreen.
+// formulario de postulacion y vinculacion con captura de datos validados
 @Composable
 fun ContactScreen(
     viewModel: UsuarioViewModel,
@@ -101,7 +100,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // Campo de nombre con ícono de persona y mensaje de error reactivo debajo.
+            // campo de nombre con icono person y error reactivo
             EtiquetaCampo("NOMBRE")
             OutlinedTextField(
                 value = estado.nombre,
@@ -126,7 +125,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Campo de correo con ícono de sobre y validación visual por campo.
+            // campo de correo con icono email y error reactivo
             EtiquetaCampo("CORREO")
             OutlinedTextField(
                 value = estado.correo,
@@ -151,7 +150,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Selector desplegable para elegir la modalidad de colaboración.
+            // selector desplegable de modalidad de colaboracion
             EtiquetaCampo("¿CÓMO QUIERES AYUDAR?")
             Box(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -206,14 +205,14 @@ fun ContactScreen(
                 )
             }
 
-            // Animación funcional que despliega el campo RUT solo si selecciona Alianza empresarial.
+            // animacion funcional que despliega el campo rut unicamente al elegir alianza empresarial
             AnimatedVisibility(visible = estado.colaboracion == "Alianza empresarial") {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
                     EtiquetaCampo("RUT COMERCIAL")
                     OutlinedTextField(
                         value = estado.rutComercial,
                         onValueChange = viewModel::onRutComercialChange,
-                        placeholder = { Text("12.345.678-5", color = AlbaTextSecondary) },
+                        placeholder = { Text("12345678-5", color = AlbaTextSecondary) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Badge,
@@ -235,7 +234,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Selector desplegable de programa social.
+            // selector desplegable para elegir el programa social de interes
             EtiquetaCampo("PROGRAMA")
             Box(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -280,7 +279,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // campo de texto para el mensaje opcional con validacion visual de longitud maxima
+            // campo de texto para mensaje opcional con validacion visual de longitud maxima
             EtiquetaCampo("MENSAJE (OPCIONAL)")
             OutlinedTextField(
                 value = estado.mensaje,
@@ -298,13 +297,14 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Valida los datos, consulta el recurso nativo de red y guarda la solicitud en Room.
+            // valida el formulario, verifica red nativa, guarda en room y limpia los campos
             Button(
                 onClick = {
                     if (viewModel.validarFormulario()) {
                         val conectado = hayConexionInternet(context)
-                        viewModel.guardarEnSqlite(conectado)
-                        alIrAResumen()
+                        viewModel.guardarEnSqlite(conectado) {
+                            alIrAResumen()
+                        }
                     }
                 },
                 shape = RoundedCornerShape(2.dp),
@@ -329,41 +329,11 @@ fun ContactScreen(
                     fontSize = 13.sp
                 )
             }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            Text(
-                text = "DIRECTORIO DEMOSTRATIVO CORPALIV",
-                color = AlbaOrange,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                modifier = Modifier.padding(bottom = 10.dp)
-            )
-
-            // Tarjetas desplegables con datos ficticios conectadas al marcador telefónico nativo.
-            TarjetaContactoDesplegable(
-                area = "Coordinación Alba Lab y Empresas",
-                encargado = "Equipo de Vinculación (Dato ficticio)",
-                telefono = "+56900000000",
-                correo = "contacto@ejemplo.cl",
-                alLlamar = { num -> llamarPorTelefono(context, num) }
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            TarjetaContactoDesplegable(
-                area = "Área de Voluntariado y Donaciones",
-                encargado = "Coordinación Social (Dato ficticio)",
-                telefono = "+56200000000",
-                correo = "alianzas@ejemplo.cl",
-                alLlamar = { num -> llamarPorTelefono(context, num) }
-            )
         }
     }
 }
 
-// Dibuja la etiqueta superior de cada campo del formulario.
+// dibuja el rotulo superior de cada campo del formulario
 @Composable
 private fun EtiquetaCampo(texto: String) {
     Text(
@@ -376,7 +346,7 @@ private fun EtiquetaCampo(texto: String) {
     )
 }
 
-// Configura los colores oscuros estándar para los campos de texto del formulario.
+// define la paleta oscura estandar para los campos de texto
 @Composable
 private fun coloresInputAlba() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = AlbaCard,
