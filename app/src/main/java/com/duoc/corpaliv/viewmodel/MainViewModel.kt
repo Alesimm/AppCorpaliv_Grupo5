@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.viewmodel
 
-// emite eventos reactivos de navegacion para desacoplar las vistas del navcontroller
-// se conecta con navigationevent, screen y appnavigation
+// controlador central para pedir cambios de pantalla desde cualquier lugar de la app
+// envia ordenes de navegacion limpias para no enredar la interfaz con codigo de rutas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,41 +11,42 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
+// intermediario que recibe solicitudes de cambio de pantalla y las transmite
 class MainViewModel : ViewModel() {
 
-    // canal compartido que transporta las ordenes de navegacion hacia la interfaz
+    // canal en vivo que lleva los avisos de cambio de pantalla a la interfaz
     private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
     val navigationEvents = _navigationEvents.asSharedFlow()
 
-    // emite orden de navegacion hacia una pantalla especifica
+    // envia la orden de abrir una pantalla determinada
     fun navegarA(screen: Screen) {
         viewModelScope.launch {
             _navigationEvents.emit(NavigationEvent.NavigateTo(screen))
         }
     }
 
-    // emite orden de navegacion para la barra inferior guardando el estado
+    // envia la orden para los botones de la barra inferior
     fun navegarBottom(screen: Screen) {
         viewModelScope.launch {
             _navigationEvents.emit(NavigationEvent.NavigateBottom(screen))
         }
     }
 
-    // emite orden de acceso al home tras autenticarse para remover login del stack
+    // envia la orden al entrar con exito para ir a inicio y sacar el login
     fun ingresarAlHome() {
         viewModelScope.launch {
             _navigationEvents.emit(NavigationEvent.LoginExitoso)
         }
     }
 
-    // emite orden de cierre de sesion para vaciar el stack y volver al login
+    // envia la orden de cerrar sesion y regresar al login desde cero
     fun cerrarSesion() {
         viewModelScope.launch {
             _navigationEvents.emit(NavigationEvent.CerrarSesion)
         }
     }
 
-    // emite orden para volver a la pantalla anterior
+    // envia la orden de retroceder a la pantalla anterior
     fun volverAtras() {
         viewModelScope.launch {
             _navigationEvents.emit(NavigationEvent.PopBackStack)

@@ -1,13 +1,13 @@
 package com.duoc.corpaliv.ui.theme
 
-// paleta de colores reactiva con soporte para modo oscuro y modo claro
-// se conecta con theme.kt y con todos los componentes y pantallas de la interfaz
+// colores oficiales de la app con soporte para modo claro y modo oscuro
+// define los fondos, textos, bordes y colores institucionales como naranja y morado
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-// estructura de datos inmutable que agrupa los colores del tema visual
+// grupo de colores necesarios para pintar una pantalla completa
 data class AlbaPalette(
     val fondo: Color,
     val tarjeta: Color,
@@ -18,7 +18,7 @@ data class AlbaPalette(
     val esOscuro: Boolean
 )
 
-// paleta de colores para el modo oscuro original
+// combinacion de colores para el modo oscuro con fondo negro
 val PaletaOscura = AlbaPalette(
     fondo = Color(0xFF0B0B0B),
     tarjeta = Color(0xFF161616),
@@ -29,7 +29,7 @@ val PaletaOscura = AlbaPalette(
     esOscuro = true
 )
 
-// paleta de colores para el modo claro basada exactamente en el mockup oficial
+// combinacion de colores para el modo claro con fondo crema institucional
 val PaletaClara = AlbaPalette(
     fondo = Color(0xFFFAF8F5),
     tarjeta = Color(0xFFFFFFFF),
@@ -40,16 +40,16 @@ val PaletaClara = AlbaPalette(
     esOscuro = false
 )
 
-// proveedor de composicion para la paleta activa en la jerarquia de vistas (por defecto clara)
+// variable global de compose que entrega la paleta de colores activa
 val LocalAlbaPalette = compositionLocalOf { PaletaClara }
 
-// proveedor de composicion booleano que indica si el modo oscuro esta activo (por defecto false)
+// variable booleana que avisa a toda la app si el modo oscuro esta prendido
 val LocalEsTemaOscuro = compositionLocalOf { false }
 
-// proveedor de composicion para invocar la alternancia de tema desde cualquier vista
+// funcion para cambiar de tema claro a oscuro desde cualquier boton
 val LocalAlternarTema = compositionLocalOf<() -> Unit> { {} }
 
-// accesores reactivos dinamicos que permiten a las pantallas adaptarse sin tocar su estructura
+// variables dinamicas para que las pantallas tomen el color correcto automaticamente
 val AlbaBlack: Color
     @Composable
     get() = LocalAlbaPalette.current.fondo
@@ -74,7 +74,7 @@ val AlbaTextSecondary: Color
     @Composable
     get() = LocalAlbaPalette.current.textoSecundario
 
-// colores de identidad institucional fijos comunes a ambos temas
+// colores fijos de corpaliv que no cambian: naranja, morado, rojo y verde
 val AlbaOrange = Color(0xFFEA6A12)
 val AlbaPurple = Color(0xFF5E4FA7)
 val AlbaError = Color(0xFFFF5252)

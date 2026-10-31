@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.data
 
-// operaciones crud en la base de datos local sqlite mediante room
-// se conecta con solicitudentity, appdatabase y usuarioviewmodel
+// interfaz con las consultas sql para manejar las solicitudes guardadas
+// realiza las operaciones de crear, leer, actualizar y borrar en sqlite
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -14,23 +14,23 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SolicitudDao {
 
-    // operacion create: inserta una solicitud y retorna el id autonumerico generado
+    // operacion create: guarda una solicitud y devuelve el numero de id generado
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarSolicitud(solicitud: SolicitudEntity): Long
 
-    // operacion read: consulta todas las solicitudes ordenadas de la mas reciente a la mas antigua
+    // operacion read: trae todas las solicitudes desde la mas nueva a la mas vieja
     @Query("SELECT * FROM solicitudes ORDER BY id DESC")
     fun obtenerSolicitudes(): Flow<List<SolicitudEntity>>
 
-    // operacion update: actualiza los datos o el estado de una solicitud existente
+    // operacion update: cambia datos o actualiza el estado de una solicitud
     @Update
     suspend fun actualizarSolicitud(solicitud: SolicitudEntity)
 
-    // operacion update masiva: pasa las solicitudes pendientes sin red a estado recibida
+    // actualizacion masiva: cambia todas las pendientes a recibidas al recuperar internet
     @Query("UPDATE solicitudes SET estadoEnvio = 'RECIBIDA' WHERE estadoEnvio LIKE 'PENDIENTE%'")
     suspend fun sincronizarPendientes()
 
-    // operacion delete: elimina una solicitud de la base de datos local
+    // operacion delete: borra una solicitud de la base de datos del telefono
     @Delete
     suspend fun eliminarSolicitud(solicitud: SolicitudEntity)
 }

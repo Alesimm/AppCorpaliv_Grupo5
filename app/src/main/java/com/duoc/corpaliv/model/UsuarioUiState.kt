@@ -1,9 +1,11 @@
 package com.duoc.corpaliv.model
 
+// guarda todos los datos actuales de la pantalla como el usuario activo y lo que escribe
+// cuando algo cambia aqui las vistas de compose se redibujan solas al instante
+
 import com.duoc.corpaliv.validation.CredencialesPrueba
 
-// estructura inmutable que agrupa el estado de autenticacion y el formulario de contacto
-// se conecta con usuarioviewmodel y es observada por loginscreen, homescreen, contactscreen y perfilscreen
+// estado completo de la sesion del usuario y del formulario de contacto
 data class UsuarioUiState(
     val correoLogin: String = CredencialesPrueba.CORREO,
     val claveLogin: String = CredencialesPrueba.CLAVE,

@@ -1,6 +1,9 @@
 package com.duoc.corpaliv.navigation
 
-// clase sellada con todas las rutas de navegacion
+// lista de nombres oficiales para cada pantalla de la aplicacion
+// evita escribir texto a mano y equivocarse en los nombres de las rutas
+
+// clase sellada con las rutas de las 10 pantallas de la app
 sealed class Screen(val route: String) {
     object Login : Screen("login_screen")
     object Home : Screen("home_screen")

@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.screens
 
-// pantalla que visualiza el comprobante oficial de la solicitud enviada o consultada
-// se conecta con usuarioviewmodel, screen, apptopbar y appbottombar
+// comprobante con el numero de folio de la solicitud enviada
+// muestra los datos guardados en la base de datos y si se envio o quedo pendiente
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -35,7 +35,7 @@ import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// muestra el comprobante con folio y estado real de la solicitud guardada en room
+// dibuja el comprobante oficial con su folio correlativo y estado de red
 @Composable
 fun ResumenScreen(
     viewModel: UsuarioViewModel,
@@ -102,7 +102,7 @@ fun ResumenScreen(
     }
 }
 
-// cuerpo estructurado del comprobante con folio y datos guardados en la base de datos
+// diseno del comprobante con su tarjeta de folio y tabla de datos
 @Composable
 private fun ContenidoComprobante(
     solicitud: SolicitudEntity,
@@ -116,7 +116,7 @@ private fun ContenidoComprobante(
             .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
-        // icono circular naranja con check de confirmacion
+        // circulo naranja con un visto bueno que confirma el envio
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -151,7 +151,7 @@ private fun ContenidoComprobante(
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // tarjeta destacada que resalta el folio correlativo y el estado de envio
+        // tarjeta destacada con el numero de folio correlativo y el estado de envio
         Card(
             shape = RoundedCornerShape(2.dp),
             colors = CardDefaults.cardColors(containerColor = AlbaCard),
@@ -183,7 +183,7 @@ private fun ContenidoComprobante(
                     )
                 }
 
-                // indicador de estado sincronizado o pendiente sin red
+                // etiqueta que dice si la solicitud fue recibida o esta pendiente sin red
                 Box(
                     modifier = Modifier
                         .border(1.dp, AlbaOrange, RoundedCornerShape(2.dp))
@@ -200,7 +200,7 @@ private fun ContenidoComprobante(
             }
         }
 
-        // tabla de campos guardados en la tabla sqlite de room
+        // lista con los datos ingresados como fecha, nombre, correo y mensaje
         Card(
             shape = RoundedCornerShape(2.dp),
             colors = CardDefaults.cardColors(containerColor = AlbaCard),
@@ -227,7 +227,7 @@ private fun ContenidoComprobante(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // botones de accion para navegar a perfil o volver al inicio
+        // botones para ir a ver todas las solicitudes o volver a inicio
         BotonSecundario(
             texto = "MIS SOLICITUDES",
             alHacerClick = alIrAPerfil
@@ -242,7 +242,7 @@ private fun ContenidoComprobante(
     }
 }
 
-// fila individual para mostrar cada clave y valor en la tabla del comprobante
+// fila simple con el titulo a la izquierda y el valor a la derecha
 @Composable
 private fun FilaComprobante(titulo: String, valor: String) {
     Row(

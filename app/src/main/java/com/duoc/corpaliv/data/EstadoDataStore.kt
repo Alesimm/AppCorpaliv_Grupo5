@@ -1,5 +1,8 @@
 package com.duoc.corpaliv.data
 
+// archivo de preferencias del telefono usando datastore
+// guarda datos pequenos como el modo oscuro, favoritos, recordarme y notificaciones
+
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -9,10 +12,9 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-// Gestiona la persistencia local ligera con DataStore Preferences.
-// Se conecta con EstadoViewModel (modo colaborador y favoritos) y UsuarioViewModel (recordar correo).
 val Context.dataStore by preferencesDataStore(name = "preferencias_usuario")
 
+// clase que lee y escribe las preferencias del usuario de forma simple
 class EstadoDataStore(private val context: Context) {
 
     private val ESTADO_ACTIVADO = booleanPreferencesKey("modo_activado")
@@ -20,21 +22,21 @@ class EstadoDataStore(private val context: Context) {
     private val CORREO_RECORDADO = stringPreferencesKey("correo_recordado")
     private val TEMA_OSCURO = booleanPreferencesKey("tema_oscuro")
 
-    // Guarda en el teléfono si el modo colaborador está activo o inactivo.
+    // guarda si el usuario activo las alertas del modo colaborador
     suspend fun guardarEstado(valor: Boolean) {
         context.dataStore.edit { preferencias ->
             preferencias[ESTADO_ACTIVADO] = valor
         }
     }
 
-    // Expone un flujo reactivo con el estado del modo colaborador.
+    // lee si las alertas del modo colaborador estan prendidas o apagadas
     fun obtenerEstado(): Flow<Boolean?> {
         return context.dataStore.data.map { preferencias ->
             preferencias[ESTADO_ACTIVADO]
         }
     }
 
-    // Agrega o quita el identificador de un programa en el conjunto de favoritos locales.
+    // guarda o saca un programa de la lista de favoritos con un solo toque
     suspend fun alternarFavorito(idPrograma: String) {
         context.dataStore.edit { preferencias ->
             val actuales = preferencias[FAVORITOS_GUARDADOS] ?: emptySet()
@@ -46,14 +48,14 @@ class EstadoDataStore(private val context: Context) {
         }
     }
 
-    // Devuelve en tiempo real el conjunto de programas marcados como favoritos.
+    // entrega la lista de todos los programas que el usuario marco como favoritos
     fun obtenerFavoritos(): Flow<Set<String>> {
         return context.dataStore.data.map { preferencias ->
             preferencias[FAVORITOS_GUARDADOS] ?: emptySet()
         }
     }
 
-    // Guarda solo el correo del usuario si marca Recordarme, o lo limpia si desmarca la opción.
+    // guarda el correo si marco recordarme para no escribirlo cada vez
     suspend fun guardarCorreoRecordado(correo: String) {
         context.dataStore.edit { preferencias ->
             if (correo.isBlank()) {
@@ -64,21 +66,21 @@ class EstadoDataStore(private val context: Context) {
         }
     }
 
-    // Recupera el correo guardado para precargarlo al abrir la pantalla de login.
+    // lee el correo recordado para rellenarlo automaticamente en el login
     fun obtenerCorreoRecordado(): Flow<String> {
         return context.dataStore.data.map { preferencias ->
             preferencias[CORREO_RECORDADO] ?: ""
         }
     }
 
-    // Guarda la preferencia de tema oscuro (true) o claro (false).
+    // guarda si el usuario prefiere ver la app en modo claro o modo oscuro
     suspend fun guardarTemaOscuro(oscuro: Boolean) {
         context.dataStore.edit { preferencias ->
             preferencias[TEMA_OSCURO] = oscuro
         }
     }
 
-    // Devuelve un flujo reactivo con la preferencia de tema visual (por defecto falso: modo claro institucional).
+    // lee si la app debe mostrarse en modo claro o modo oscuro
     fun obtenerTemaOscuro(): Flow<Boolean> {
         return context.dataStore.data.map { preferencias ->
             preferencias[TEMA_OSCURO] ?: false

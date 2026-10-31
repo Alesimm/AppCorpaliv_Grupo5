@@ -25,8 +25,10 @@ import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.utils.llamarPorTelefono
 
-// Muestra la información institucional general de CORPALIV y Alba Lab con datos de contacto ficticios.
-// Se conecta con AppTopBar, AppBottomBar, TarjetaContactoDesplegable y NativeUtils (llamada telefónica).
+// informacion institucional sobre la fundacion corpaliv y la red alba lab
+// explica su labor social e incluye telefonos para llamar desde el telefono
+
+// vista con la mision de la fundacion y tarjetas de contacto telefonico
 @Composable
 fun AcercaDeScreen(
     alAbrirMenu: () -> Unit = {},
@@ -73,7 +75,7 @@ fun AcercaDeScreen(
                 lineHeight = 22.sp
             )
 
-            // Tarjeta informativa del área educativa institucional.
+            // tarjeta que explica el area educativa de educacion especial
             Card(
                 shape = RoundedCornerShape(2.dp),
                 colors = CardDefaults.cardColors(containerColor = AlbaCard),
@@ -106,7 +108,7 @@ fun AcercaDeScreen(
                 }
             }
 
-            // Tarjeta informativa de la red sociolaboral Alba Lab.
+            // tarjeta que explica la red de trabajo e inclusion sociolaboral
             Card(
                 shape = RoundedCornerShape(2.dp),
                 colors = CardDefaults.cardColors(containerColor = AlbaCard),
@@ -146,7 +148,7 @@ fun AcercaDeScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            // Tarjetas desplegables con números y correos ficticios que invocan el marcador nativo.
+            // tarjetas desplegables para tocar y llamar directamente a los encargados
             TarjetaContactoDesplegable(
                 area = "Coordinación Alba Lab",
                 encargado = "Equipo de Vinculación (Dato ficticio)",

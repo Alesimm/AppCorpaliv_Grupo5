@@ -1,7 +1,9 @@
 package com.duoc.corpaliv.model
 
-// Define la estructura de cada programa social del catálogo con datos de contacto ficticios.
-// Se conecta con HomeScreen, CatalogScreen, DetalleScreen y ContactScreen.
+// modelo de datos para los programas de capacitacion e inclusion de corpaliv
+// contiene la informacion que se muestra en el catalogo y en el detalle
+
+// datos que describen cada programa social como titulo resumen e impacto
 data class ProgramaSocial(
     val id: String,
     val categoria: String,
@@ -15,7 +17,7 @@ data class ProgramaSocial(
     val telefonoContacto: String
 )
 
-// Lista de programas de demostración con teléfonos y textos ficticios según las reglas del caso.
+// lista con los tres programas oficiales que se muestran en la app
 val listaProgramasAlbaLab = listOf(
     ProgramaSocial(
         id = "taller_oficios",

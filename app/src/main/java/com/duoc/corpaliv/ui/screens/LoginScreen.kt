@@ -39,28 +39,29 @@ import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// pantalla inicial de login que muestra el logo institucional y valida el acceso del usuario
-// se conecta con usuarioviewmodel para leer el estado reactivo y con appnavigation para ir al home
+// pantalla de inicio de sesion con logo de corpaliv y campos de acceso
+// pide correo y clave validados y permite recordar el usuario en el telefono
+// dibuja el logo, los campos de texto, el boton de ojo y el boton ingresar
 @Composable
 fun LoginScreen(
     viewModel: UsuarioViewModel,
     alIngresar: () -> Unit = {}
 ) {
-    // observa en tiempo real los datos del formulario y los mensajes de error desde el viewmodel
+    // lee lo que escribe el usuario y los posibles errores desde el viewmodel
     val estado by viewModel.estado.collectAsState()
     val esOscuro = LocalEsTemaOscuro.current
 
-    // estados locales de interfaz para mostrar u ocultar la clave y abrir el dialogo de recuperacion
+    // variables locales para ver la clave oculta y abrir la ventana de ayuda
     var mostrarClave by remember { mutableStateOf(false) }
     var mostrarDialogoOlvido by remember { mutableStateOf(false) }
     var correoRecuperacion by remember { mutableStateOf("") }
     var errorCorreoRecuperacion by remember { mutableStateOf<String?>(null) }
     var mensajeRecuperacionEnviado by remember { mutableStateOf(false) }
 
-    // expresion regular para validar que el correo de recuperacion tenga formato correcto
+    // regla simple para revisar que el correo tenga formato de email valido
     val regexCorreo = remember { Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$") }
 
-    // dialogo demostrativo para simular la recuperacion de contrasena sin servidor externo
+    // ventana emergente de ayuda para recuperar la clave de acceso
     if (mostrarDialogoOlvido) {
         AlertDialog(
             onDismissRequest = {
@@ -117,7 +118,7 @@ fun LoginScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // valida el formato del correo antes de mostrar la confirmacion de la demo
+                        // revisa que el correo este bien escrito antes de simular el envio
                         if (correoRecuperacion.isBlank() || !regexCorreo.matches(correoRecuperacion.trim())) {
                             errorCorreoRecuperacion = "Ingresa un correo con formato válido"
                             mensajeRecuperacionEnviado = false
@@ -144,7 +145,7 @@ fun LoginScreen(
         )
     }
 
-    // contenedor principal con arrangement center para centrar verticalmente el logo y el formulario
+    // columna centrada verticalmente con el logo y el formulario
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -156,7 +157,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // cabecera centrada con el logo oficial reactivo al modo claro u oscuro
+        // muestra el logo oficial que cambia suavemente entre modo claro y oscuro
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -190,7 +191,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(44.dp))
 
-        // bloque del formulario con iconos, validaciones visuales por campo y datastore en recordarme
+        // caja con los campos de correo, clave, recordarme y el boton ingresar
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "CORREO",
@@ -200,7 +201,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 6.dp)
             )
 
-            // campo de correo con icono leadingicon y mensaje de error reactivo en supportingtext
+            // campo para ingresar el correo con icono y mensaje de error en rojo
             OutlinedTextField(
                 value = estado.correoLogin,
                 onValueChange = viewModel::onCorreoLoginChange,
@@ -241,7 +242,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 6.dp)
             )
 
-            // campo de contrasena con icono de candado, boton de ojo para ocultar y validacion visual
+            // campo para la clave con candado, boton para ver u ocultar y error en rojo
             OutlinedTextField(
                 value = estado.claveLogin,
                 onValueChange = viewModel::onClaveLoginChange,
@@ -282,7 +283,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // fila con casilla recordarme que guarda solo el correo en datastore y enlace de olvido
+            // fila con la casilla recordarme para guardar el correo en el telefono
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -330,7 +331,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // boton principal que ejecuta la validacion en el viewmodel antes de navegar al inicio
+            // boton principal que revisa los datos antes de entrar a la pantalla de inicio
             BotonPrincipal(
                 texto = "INGRESAR",
                 alHacerClick = {

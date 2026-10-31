@@ -42,7 +42,10 @@ import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.utils.obtenerWindowSizeClass
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// pantalla 2 inicio con saludo, programas destacados, opciones de colaboracion y windowsizeclass
+// pantalla principal con saludo al usuario, carrusel de programas y opciones de ayuda
+// al tocar un programa abre su detalle y al tocar una opcion de ayuda abre el formulario
+
+// vista principal que se adapta al tamano de la pantalla ya sea celular o tablet
 @Composable
 fun HomeScreen(
     usuarioViewModel: UsuarioViewModel,
@@ -55,7 +58,7 @@ fun HomeScreen(
     val estado by usuarioViewModel.estado.collectAsState()
     val windowSizeClass = obtenerWindowSizeClass()
 
-    // adapta los margenes laterales segun si es celular compacto o tablet expandida
+    // ajusta el ancho de los margenes para que se vea bien en celulares chicos y tablets
     val margenLateral = when (windowSizeClass.widthSizeClass) {
         WindowWidthSizeClass.Compact -> 20.dp
         WindowWidthSizeClass.Medium -> 48.dp
@@ -112,7 +115,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // carrusel horizontal de programas destacados igual al mockup
+            // carrusel horizontal para deslizar y ver las tarjetas de los programas
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -136,7 +139,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // grilla de 5 formas de colaborar identica a la lamina 2
+            // botones de acceso rapido para elegir como colaborar: donacion, alianza, etc
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -187,6 +190,7 @@ fun HomeScreen(
     }
 }
 
+// tarjeta individual del carrusel con la curva del logo y el titulo del programa
 @Composable
 private fun TarjetaProgramaDestacado(
     programa: ProgramaSocial,
@@ -233,6 +237,7 @@ private fun TarjetaProgramaDestacado(
     }
 }
 
+// boton con icono naranja que al tocarlo preselecciona la forma de ayuda en el formulario
 @Composable
 private fun BotonOpcionColaborar(
     titulo: String,
