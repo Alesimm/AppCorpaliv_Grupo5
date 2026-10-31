@@ -235,7 +235,6 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             programa = actual.programa.ifBlank { listaProgramasAlbaLab.first().titulo },
             nombre = actual.nombre,
             correo = actual.correo,
-            direccion = "",
             rutComercial = if (actual.rutComercial.isBlank()) "No aplica" else actual.rutComercial,
             mensaje = if (actual.mensaje.isBlank()) "Sin mensaje adicional." else actual.mensaje,
             estadoEnvio = estadoInicial

@@ -1,14 +1,21 @@
 # AppCorpaliv - Red Alba Lab
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.0.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-Material_3-4285F4?logo=android&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Room Database](https://img.shields.io/badge/Room_SQLite-Local_Storage-47A248?logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room)
 [![DataStore](https://img.shields.io/badge/Jetpack-DataStore_Preferences-F4511E?logo=android&logoColor=white)](https://developer.android.com/topic/libraries/architecture/datastore)
 [![JUnit 4](https://img.shields.io/badge/Tests_Unitarios-6%2F6_Aprobados-brightgreen)](https://junit.org/)
 [![Min SDK](https://img.shields.io/badge/Min_SDK-24_(Android_7.0)-informational)](https://developer.android.com/)
-[![Target SDK](https://img.shields.io/badge/Target_SDK-34_(Android_14)-informational)](https://developer.android.com/)
+[![Target SDK](https://img.shields.io/badge/Target_SDK-37_(Android_15)-informational)](https://developer.android.com/)
 
 Aplicacion movil nativa para Android desarrollada como proyecto estudiantil de caracter formativo, orientada a apoyar la labor comunitaria de la Fundacion CORPALIV (Corporacion de Padres y Amigos por el Limitado Visual) y su red de inclusion sociolaboral Alba Lab.
+
+---
+
+## Responsables del Proyecto
+
+- Alexander Simpertigue
+- Joseph Rivas
 
 ---
 
@@ -67,7 +74,7 @@ El proyecto esta construido siguiendo el patron de arquitectura Model-View-ViewM
 ```
 
 ### Tecnologias Principales
-- Lenguaje: Kotlin 2.0
+- Lenguaje: Kotlin 2.2.10
 - Framework UI: Jetpack Compose con Material 3
 - Asincronia: Corrutinas de Kotlin y flujos reactivos (StateFlow / SharedFlow)
 - Base de datos local: Room Database (SQLite)
@@ -97,10 +104,14 @@ En lugar de depender de recursos graficos rasterizados (PNG) que aumentan el tam
 - Recursos de marca optimizados en formato WebP con transiciones suaves mediante Crossfade.
 
 ### 4. Integracion con Servicios Nativos del Dispositivo
-- Marcador telefonico: Uso de Intent(Intent.ACTION_DIAL) para iniciar comunicaciones directas con los encargados de area sin requerir permisos invasivos.
-- Difusion de informacion: Uso de Intent(Intent.ACTION_SEND) con seleccionador nativo para compartir detalles de los programas a traves de aplicaciones instaladas en el dispositivo.
+- Marcador telefonico: Uso de Intent(Intent.ACTION_DIAL) con gestion de excepciones try/catch para iniciar comunicaciones directas con los encargados de area sin requerir permisos invasivos.
+- Difusion de informacion: Uso de Intent(Intent.ACTION_SEND) con seleccionador nativo y bloque seguro try/catch para compartir detalles de los programas a traves de aplicaciones instaladas en el dispositivo.
 
-### 5. Icono de Aplicacion Adaptativo
+### 5. Validacion Desacoplada y Proteccion de Datos
+- Modulo de validacion independiente de la interfaz grafica (`Validadores.kt`) con funciones puras para correo, clave, nombre, mensaje y formato de RUT.
+- Validacion de formato de RUT chileno con guion y digito verificador o letra K (`12345678-5` o `12345678-K`), alineada con la politica de uso estricto de datos ficticios y sinteticos.
+
+### 6. Icono de Aplicacion Adaptativo
 - Configuracion de icono adaptativo en mipmap-anydpi-v26 con el isotipo de las tres sonrisas institucionales sobre fondo oscuro (#141414), compatible con cualquier formato de icono del sistema operativo (circular, cuadrado redondeado o squircle).
 
 ---
@@ -143,14 +154,14 @@ app/src/main/java/com/duoc/corpaliv
 
 El proyecto cuenta con pruebas unitarias automaticas implementadas con JUnit 4 en `ValidadoresTest.kt` para asegurar la confiabilidad de las reglas de negocio principales:
 
-| Prueba | Descripcion | Resultado |
+| Metodo de Prueba | Descripcion | Resultado |
 | :--- | :--- | :---: |
-| validarCorreo_formatoInvalido_retornaError | Rechaza correos sin arroba o con dominio no valido | Aprobado |
-| validarCorreo_formatoValido_retornaNull | Acepta correos con formato estandar valido | Aprobado |
-| validarClave_menosDe8Caracteres_retornaError | Exige contrasenas de al menos 8 caracteres | Aprobado |
-| validarNombre_campoVacio_retornaError | Exige que el nombre contenga al menos 3 caracteres | Aprobado |
-| validarRut_alianzaEmpresarial_validaFormatoChileno | Valida formato y digito verificador de RUT comercial | Aprobado |
-| validarCredencialesLogin_credencialesPrueba | Valida las credenciales de prueba y rechaza accesos incorrectos | Aprobado |
+| `validarCorreo_conCorreoValido_retornaNull` | Acepta correos con formato estandar valido (ej: colaborador@ejemplo.cl) | Aprobado |
+| `validarCorreo_conCorreoInvalido_retornaError` | Rechaza correos sin arroba o con estructura incorrecta | Aprobado |
+| `validarClave_conClaveCorta_retornaError` | Exige contrasenas de al menos 8 caracteres con combinacion alfanumerica | Aprobado |
+| `validarRut_conRutValidoFicticio_retornaNull` | Valida formato chileno de RUT comercial con guion y digito verificador o K ficticio | Aprobado |
+| `validarRut_conRutInvalido_retornaError` | Rechaza ruts sin guion o con cantidad incorrecta de digitos | Aprobado |
+| `validarCredencialesLogin_conDatosCorrectosEIncorrectos` | Valida credenciales oficiales de prueba y rechaza accesos con claves incorrectas | Aprobado |
 
 ---
 
@@ -158,8 +169,8 @@ El proyecto cuenta con pruebas unitarias automaticas implementadas con JUnit 4 e
 
 ### Requisitos Previos
 - Android Studio (Iguana, Jellyfish, Ladybug, Koala o superior)
-- Java Development Kit (JDK) version 17
-- Android SDK: Min SDK 24 (Android 7.0) / Target SDK 34 (Android 14)
+- Java Development Kit (JDK) version 11 (o superior)
+- Android SDK: Min SDK 24 (Android 7.0) / Target SDK 37 (Android 15)
 
 ### Comandos de Terminal (Gradle Wrapper)
 
