@@ -36,7 +36,10 @@ import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 
-// pantalla de configuracion conectada al menu lateral que mantiene datastore y animaciones de guia 12
+// pantalla de configuracion para activar alertas de ayuda y cambiar el tema
+// guarda las preferencias directamente en el telefono usando datastore
+
+// vista con botones grandes para prender alertas y alternar modo oscuro o claro
 @Composable
 fun EstadoScreen(
     alVolver: () -> Unit,
@@ -78,24 +81,24 @@ fun EstadoScreen(
 
             val esOscuro by viewModel.esTemaOscuro.collectAsState()
 
-            // color del fondo inactivo adaptado al modo claro (gris calido suave) u oscuro (gris grafito)
+            // color suave para el boton cuando las notificaciones estan apagadas
             val fondoInactivo = if (esOscuro) Color(0xFF262626) else Color(0xFFEBE7DD)
 
-            // anima el color del boton entre naranja institucional activo y tono neutro inactivo
+            // animacion de color: naranja cuando esta activo y gris cuando esta apagado
             val colorAnimado by animateColorAsState(
                 targetValue = if (estaActivo) AlbaOrange else fondoInactivo,
                 animationSpec = tween(durationMillis = 350),
                 label = "colorBotonNotificaciones"
             )
 
-            // estado derivado para calcular el texto del boton de forma optima
+            // texto del boton que cambia solo segun si esta activado o desactivado
             val textoBoton by remember(estaActivo) {
                 derivedStateOf {
                     if (estaActivo) "DESACTIVAR NOTIFICACIONES" else "ACTIVAR NOTIFICACIONES"
                 }
             }
 
-            // color de texto de alto contraste segun si esta activo o el modo visual
+            // color blanco para que el texto siempre se lea con claridad
             val colorTextoBoton = if (estaActivo) Color.White else AlbaWhite
 
             Column(
@@ -107,7 +110,7 @@ fun EstadoScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // tarjeta 1: preferencia de notificaciones y modo colaborador en datastore
+                // tarjeta 1: boton para activar o desactivar las alertas de ayuda
                 Card(
                     shape = RoundedCornerShape(2.dp),
                     colors = CardDefaults.cardColors(containerColor = AlbaCard),
@@ -182,7 +185,7 @@ fun EstadoScreen(
                     }
                 }
 
-                // tarjeta 2: preferencia de tema visual (modo claro institucional vs modo oscuro)
+                // tarjeta 2: boton para cambiar entre tema claro y tema oscuro
                 Card(
                     shape = RoundedCornerShape(2.dp),
                     colors = CardDefaults.cardColors(containerColor = AlbaCard),

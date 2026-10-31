@@ -40,7 +40,10 @@ import com.duoc.corpaliv.ui.utils.llamarPorTelefono
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// pantalla 5 detalle del programa con recursos nativos llamar y difundir
+// muestra toda la informacion del programa elegido con botones para llamar y compartir
+// incluye el boton quiero colaborar que lleva directo al formulario con el programa listo
+
+// vista completa del programa con su historia, impacto social y acciones nativas
 @Composable
 fun DetalleScreen(
     usuarioViewModel: UsuarioViewModel,
@@ -84,14 +87,14 @@ fun DetalleScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            // cabecera ilustrada con el 18% del color del programa segun el mockup oficial
+            // cabecera con el color institucional del programa de fondo
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(240.dp)
                     .background(colorProg.copy(alpha = 0.18f))
             ) {
-                // ilustracion vectorial de las sonrisas del logo a escala ampliada con holgura para la barra superior
+                // dibujo vectorial ampliado de las curvas del logo
                 IlustracionPrograma(
                     idPrograma = programa.id,
                     modifier = Modifier.fillMaxSize(),
@@ -140,7 +143,7 @@ fun DetalleScreen(
                 }
             }
 
-            // cuerpo con informacion, botones nativos llamar/difundir e impacto
+            // texto con la categoria, el titulo y la explicacion del programa
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 val colorCategoria = if (esOscuro) {
                     colorProg
@@ -181,7 +184,7 @@ fun DetalleScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // botones de recursos nativos llamar y difundir
+                // botones nativos para abrir el marcador del telefono o compartir en redes
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -234,7 +237,7 @@ fun DetalleScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // tarjeta de impacto
+                // tarjeta con el impacto social y testimonio de participantes
                 Card(
                     shape = RoundedCornerShape(2.dp),
                     colors = CardDefaults.cardColors(containerColor = AlbaCard),
@@ -275,7 +278,7 @@ fun DetalleScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // tarjeta destino del aporte
+                // tarjeta que explica en que se usa el aporte de los colaboradores
                 Card(
                     shape = RoundedCornerShape(2.dp),
                     colors = CardDefaults.cardColors(containerColor = AlbaCard),

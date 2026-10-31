@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.sp
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 
-// componentes graficos vectoriales de los programas sociales basados en el logo institucional
-// se conecta con HomeScreen, CatalogScreen y DetalleScreen respetando modo claro y modo oscuro
+// dibuja las curvas y arcos de colores del logo oficial usando codigo canvas nativo
+// se adapta solo si la app esta en modo claro o en modo oscuro
 
-// retorna el color institucional caracteristico asociado a cada programa social
+// devuelve el color oficial de cada programa: amarillo, verde o morado
 fun colorDelPrograma(id: String): Color = when (id) {
     "taller_oficios" -> Color(0xFFFFC21A)
     "insercion_laboral" -> Color(0xFF2FCB7E)
@@ -36,7 +36,7 @@ fun colorDelPrograma(id: String): Color = when (id) {
     else -> AlbaOrange
 }
 
-// etiqueta de categoria estilizada con contraste adaptativo para modo claro y modo oscuro
+// pastilla de color con el nombre de la categoria en letras mayusculas
 @Composable
 fun EtiquetaCategoriaPrograma(
     idPrograma: String,
@@ -77,7 +77,7 @@ fun EtiquetaCategoriaPrograma(
     }
 }
 
-// dibuja las sonrisas y arcos vectoriales oficiales del logo sin colisionar con las etiquetas
+// dibuja en pantalla las curvas oficiales del logo segun el programa elegido
 @Composable
 fun IlustracionPrograma(
     idPrograma: String,
@@ -93,7 +93,7 @@ fun IlustracionPrograma(
 
         when (idPrograma) {
             "taller_oficios" -> {
-                // tres arcos en u concentricos hacia abajo con opacidades 100%, 60% y 30%
+                // dibuja tres arcos amarillos hacia abajo con distintos tonos
                 val colorBase = Color(0xFFFFC21A)
                 val radioMayor = 70.dp.toPx() * escala
                 val cx = (ancho / 2f) + desplazamientoX.toPx()
@@ -118,7 +118,7 @@ fun IlustracionPrograma(
                 }
             }
             "insercion_laboral" -> {
-                // onda continua de cinco semicirculos mas segunda onda inferior al 35%
+                // dibuja una ola verde continua de curvas hacia arriba y abajo
                 val colorBase = Color(0xFF2FCB7E)
                 val rOnda = 14.dp.toPx() * escala
                 val anchoOnda = 10f * rOnda
@@ -163,7 +163,7 @@ fun IlustracionPrograma(
                 )
             }
             "autonomia_transicion" -> {
-                // tres arcos hacia arriba concentricos con opacidades 30%, 60% y 100% mas pastilla vertical
+                // dibuja tres arcos morados hacia arriba mas una barra vertical
                 val colorBase = Color(0xFF9A8DF5)
                 val rMayor = 90.dp.toPx() * escala
                 val cx = (ancho / 2f) + (8.dp.toPx() * escala) + desplazamientoX.toPx()
@@ -201,7 +201,7 @@ fun IlustracionPrograma(
                 )
             }
             else -> {
-                // sonrisa generica alternativa para otros identificadores de programas
+                // dibuja una curva naranja basica si es otro programa
                 val r = 40.dp.toPx() * escala
                 val cx = (ancho / 2f) + desplazamientoX.toPx()
                 val cy = (alto / 2f) + desplazamientoY.toPx()

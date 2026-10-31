@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.screens
 
-// pantalla del formulario de colaboracion con validacion reactiva y persistencia en room
-// se conecta con usuarioviewmodel, screen, apptopbar, appbottombar y nativeutils
+// pantalla del formulario para enviar una propuesta de ayuda o alianza
+// revisa que los datos esten correctos y guarda la solicitud en la base de datos sqlite
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -38,7 +38,7 @@ import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.utils.hayConexionInternet
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// formulario de postulacion y vinculacion con captura de datos validados
+// dibuja el formulario completo con validacion de campos y boton de envio
 @Composable
 fun ContactScreen(
     viewModel: UsuarioViewModel,
@@ -100,7 +100,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // campo de nombre con icono person y error reactivo
+            // campo para ingresar el nombre completo sin numeros
             EtiquetaCampo("NOMBRE")
             OutlinedTextField(
                 value = estado.nombre,
@@ -125,7 +125,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // campo de correo con icono email y error reactivo
+            // campo para ingresar el correo electronico con formato valido
             EtiquetaCampo("CORREO")
             OutlinedTextField(
                 value = estado.correo,
@@ -150,7 +150,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // selector desplegable de modalidad de colaboracion
+            // menu desplegable para elegir como colaborar: donacion, voluntariado, etc
             EtiquetaCampo("¿CÓMO QUIERES AYUDAR?")
             Box(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -205,7 +205,7 @@ fun ContactScreen(
                 )
             }
 
-            // animacion funcional que despliega el campo rut unicamente al elegir alianza empresarial
+            // si elige alianza empresarial se despliega el campo para pedir el rut
             AnimatedVisibility(visible = estado.colaboracion == "Alianza empresarial") {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
                     EtiquetaCampo("RUT COMERCIAL")
@@ -234,7 +234,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // selector desplegable para elegir el programa social de interes
+            // menu desplegable para elegir el programa social de interes
             EtiquetaCampo("PROGRAMA")
             Box(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -279,7 +279,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // campo de texto para mensaje opcional con validacion visual de longitud maxima
+            // caja de texto opcional para dejar un mensaje de hasta 200 letras
             EtiquetaCampo("MENSAJE (OPCIONAL)")
             OutlinedTextField(
                 value = estado.mensaje,
@@ -297,7 +297,7 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // valida el formulario, verifica red nativa, guarda en room y limpia los campos
+            // boton que valida los campos, revisa el internet y guarda en la base de datos
             Button(
                 onClick = {
                     if (viewModel.validarFormulario()) {
@@ -333,7 +333,7 @@ fun ContactScreen(
     }
 }
 
-// dibuja el rotulo superior de cada campo del formulario
+// rotulo que muestra el nombre de cada campo en letras pequenas
 @Composable
 private fun EtiquetaCampo(texto: String) {
     Text(
@@ -346,7 +346,7 @@ private fun EtiquetaCampo(texto: String) {
     )
 }
 
-// define la paleta oscura estandar para los campos de texto
+// colores de los campos de texto adaptados al tema de la aplicacion
 @Composable
 private fun coloresInputAlba() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = AlbaCard,

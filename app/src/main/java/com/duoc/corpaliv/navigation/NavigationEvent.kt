@@ -1,21 +1,22 @@
 package com.duoc.corpaliv.navigation
 
-// eventos sellados para coordinar la navegacion y el back stack entre vistas
-// se conecta con mainviewmodel, screen y appnavigation
+// tipos de ordenes que piden cambiar de pantalla o retroceder
+// permite que los viewmodels pidan navegar sin tocar las vistas de compose
 
+// ordenes posibles de navegacion como ir a pantalla, volver o salir
 sealed class NavigationEvent {
-    // navegacion estandar hacia una pantalla
+    // orden normal para ir hacia una pantalla nueva
     data class NavigateTo(val screen: Screen) : NavigationEvent()
 
-    // navegacion de barra inferior con preservacion de estado por pestana
+    // orden de la barra inferior para cambiar de pestana sin trabarse
     data class NavigateBottom(val screen: Screen) : NavigationEvent()
 
-    // navegacion desde login al home eliminando el login del back stack
+    // orden al iniciar sesion para ir a inicio y sacar el login del historial
     object LoginExitoso : NavigationEvent()
 
-    // cierre de sesion con limpieza completa del back stack para volver a login
+    // orden para cerrar sesion, borrar todo el historial y volver a login
     object CerrarSesion : NavigationEvent()
 
-    // retroceso simple a la pantalla anterior
+    // orden para volver hacia atras a la pantalla anterior
     object PopBackStack : NavigationEvent()
 }

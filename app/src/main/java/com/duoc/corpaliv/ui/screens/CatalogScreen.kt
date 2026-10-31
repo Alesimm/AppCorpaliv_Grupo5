@@ -35,7 +35,10 @@ import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 
-// pantalla 4 catalogo de programas sociales y vista filtrada de mis favoritos
+// muestra el catalogo de programas y tambien la lista de favoritos guardados
+// permite tocar el corazon para guardar o quitar programas favoritos en el telefono
+
+// lista vertical con tarjetas de programas y filtro de favoritos
 @Composable
 fun CatalogScreen(
     estadoViewModel: EstadoViewModel,
@@ -109,6 +112,7 @@ fun CatalogScreen(
     }
 }
 
+// tarjeta con la ilustracion del programa, su resumen y el boton de corazon
 @Composable
 private fun TarjetaCatalogoMockup(
     programa: ProgramaSocial,
@@ -128,7 +132,7 @@ private fun TarjetaCatalogoMockup(
             .clickable { alAbrirDetalle() }
     ) {
         Column {
-            // cabecera con ilustracion vectorial de las sonrisas del logo
+            // caja con la ilustracion del logo, la categoria y el corazon
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -141,7 +145,7 @@ private fun TarjetaCatalogoMockup(
                     escala = if (programa.id == "autonomia_transicion") 0.85f else 0.92f
                 )
 
-                // etiqueta de categoria superior izquierda
+                // etiqueta con el nombre de la categoria en la esquina superior
                 EtiquetaCategoriaPrograma(
                     idPrograma = programa.id,
                     categoria = programa.categoria,
@@ -150,7 +154,7 @@ private fun TarjetaCatalogoMockup(
                         .padding(14.dp)
                 )
 
-                // boton de corazon superior derecho conectado con datastore
+                // icono de corazon que al tocarlo guarda el favorito en el telefono
                 Box(
                     modifier = Modifier
                         .size(44.dp)

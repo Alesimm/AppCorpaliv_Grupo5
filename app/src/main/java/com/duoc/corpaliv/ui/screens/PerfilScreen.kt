@@ -31,7 +31,10 @@ import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// pantalla 9 perfil del colaborador con contadores y gestion de solicitudes sqlite
+// perfil del usuario activo con contadores de favoritos y solicitudes
+// permite ver el detalle de cada comprobante, sincronizar pendientes y borrar registros
+
+// dibuja la foto de perfil, el nombre del usuario y la lista de sus solicitudes
 @Composable
 fun PerfilScreen(
     usuarioViewModel: UsuarioViewModel,
@@ -88,7 +91,7 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // contadores en vivo de favoritos y solicitudes
+            // contadores en vivo que muestran cuantos favoritos y solicitudes tiene
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -156,6 +159,7 @@ fun PerfilScreen(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
+                // boton que aparece solo cuando hay solicitudes pendientes sin internet
                 if (solicitudes.any { it.estadoEnvio.startsWith("PENDIENTE") }) {
                     TextButton(onClick = { usuarioViewModel.sincronizarPendientes() }) {
                         Text(
@@ -199,7 +203,8 @@ fun PerfilScreen(
                                 .fillMaxWidth()
                                 .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
                                 .clickable {
-                                    usuarioViewModel.verDetalleSolicitud(item)
+                                    // al tocar la tarjeta abre el comprobante de esta solicitud
+                                usuarioViewModel.verDetalleSolicitud(item)
                                     alVerSolicitud()
                                 }
                         ) {
@@ -232,6 +237,7 @@ fun PerfilScreen(
                                     }
                                 }
 
+                                // boton para borrar esta solicitud de la base de datos
                                 IconButton(
                                     onClick = { usuarioViewModel.eliminarSolicitud(item) }
                                 ) {

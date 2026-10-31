@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.theme
 
-// configuracion del tema global de la aplicacion con transicion animada de colores
-// se conecta con color.kt, type.kt y mainactivity
+// aplica el tema visual a toda la app con cambio suave de colores
+// anima la transicion entre tema claro y oscuro para que no sea brusca
 
 import android.app.Activity
 import androidx.compose.animation.animateColorAsState
@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+// envuelve todas las pantallas y les entrega los colores activos y las letras
 @Composable
 fun AppCorpaliv_Grupo5Theme(
     esTemaOscuro: Boolean = false,

@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.viewmodel
 
-// gestiona la logica de negocio de usuarios, login, formulario de contacto y sqlite room
-// se conecta con validadores, estadodatastore, solicituddao y las pantallas de la interfaz
+// cerebro principal de la app que maneja el login, el formulario y la base de datos sqlite
+// valida los datos ingresados, guarda solicitudes y avisa a las vistas cuando algo cambia
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// viewmodel principal que administra la sesion del usuario y las solicitudes de ayuda
 class UsuarioViewModel(application: Application) : AndroidViewModel(application) {
 
     private val solicitudDao = AppDatabase.obtenerBaseDatos(application).solicitudDao()
@@ -50,7 +51,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        // recupera el correo recordado desde datastore si el usuario activo la opcion
+        // al iniciar la app lee si habia un correo guardado con la opcion recordarme
         viewModelScope.launch {
             val correoRecordado = estadoDataStore.obtenerCorreoRecordado().first()
             if (correoRecordado.isNotBlank()) {
@@ -64,17 +65,17 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // actualiza el correo en el login y limpia el mensaje de error
+    // actualiza el texto del correo mientras el usuario escribe en el login
     fun onCorreoLoginChange(valor: String) {
         _estado.update { it.copy(correoLogin = valor, errorLoginCorreo = null) }
     }
 
-    // actualiza la clave en el login y limpia el mensaje de error
+    // actualiza el texto de la clave mientras el usuario escribe en el login
     fun onClaveLoginChange(valor: String) {
         _estado.update { it.copy(claveLogin = valor, errorLoginClave = null) }
     }
 
-    // actualiza la casilla recordarme y limpia datastore si se desmarca
+    // activa o desactiva la casilla recordarme y borra el dato si se desmarca
     fun onRecordarCorreoChange(recordar: Boolean) {
         _estado.update { it.copy(recordarCorreo = recordar) }
         if (!recordar) {
@@ -84,7 +85,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // valida credenciales llamando a funciones puras y almacena en datastore si recordarme esta activo
+    // revisa que el correo y la clave no esten vacios y coincidan con el usuario de prueba
     fun validarLogin(): Boolean {
         val actual = _estado.value
         val errorCorreo = validarCorreo(actual.correoLogin)
@@ -100,7 +101,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             return false
         }
 
-        // verifica contra el usuario de prueba unico del caso
+        // revisa contra las credenciales del caso: colaborador@ejemplo.cl y alba2026!
         val errorCredenciales = validarCredencialesLogin(actual.correoLogin, actual.claveLogin)
         if (errorCredenciales != null) {
             _estado.update {
@@ -136,13 +137,13 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         return true
     }
 
-    // fija el programa seleccionado para ver su detalle o preseleccionarlo en el formulario
+    // guarda el programa que el usuario toco para mostrarlo en el detalle o en el formulario
     fun seleccionarPrograma(programa: ProgramaSocial) {
         _programaSeleccionado.value = programa
         _estado.update { it.copy(programa = programa.titulo) }
     }
 
-    // preselecciona la modalidad de colaboracion desde la pantalla de inicio
+    // preselecciona la forma de ayuda como donacion o voluntariado desde la pantalla de inicio
     fun preseleccionarColaboracion(tipo: String) {
         _estado.update {
             it.copy(
@@ -152,22 +153,22 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // almacena la solicitud seleccionada en el perfil para visualizar su comprobante
+    // guarda la solicitud elegida en el perfil para abrir su comprobante
     fun verDetalleSolicitud(solicitud: SolicitudEntity) {
         _solicitudSeleccionada.value = solicitud
     }
 
-    // actualiza el nombre del colaborador y limpia su mensaje de error
+    // actualiza el nombre del colaborador y borra el error en rojo si lo corrige
     fun onNombreChange(valor: String) {
         _estado.update { it.copy(nombre = valor, errores = it.errores.copy(nombre = null)) }
     }
 
-    // actualiza el correo del formulario de contacto y limpia su mensaje de error
+    // actualiza el correo del formulario y borra el error en rojo si lo corrige
     fun onCorreoChange(valor: String) {
         _estado.update { it.copy(correo = valor, errores = it.errores.copy(correo = null)) }
     }
 
-    // actualiza el tipo de colaboracion y limpia los errores vinculados
+    // actualiza la forma de ayuda elegida y oculta el campo rut si no es alianza
     fun onColaboracionChange(valor: String) {
         _estado.update {
             it.copy(
@@ -180,22 +181,22 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // actualiza el programa social elegido en el formulario
+    // actualiza el programa elegido en la lista desplegable del formulario
     fun onProgramaFormChange(valor: String) {
         _estado.update { it.copy(programa = valor) }
     }
 
-    // actualiza el rut comercial de empresa y limpia su mensaje de error
+    // actualiza el rut de empresa ingresado y borra el error en rojo si lo corrige
     fun onRutComercialChange(valor: String) {
         _estado.update { it.copy(rutComercial = valor, errores = it.errores.copy(rutComercial = null)) }
     }
 
-    // actualiza el mensaje opcional de contacto y limpia su mensaje de error
+    // actualiza el mensaje opcional que escribe el colaborador
     fun onMensajeChange(valor: String) {
         _estado.update { it.copy(mensaje = valor, errores = it.errores.copy(mensaje = null)) }
     }
 
-    // valida los campos del formulario de contacto mediante funciones puras desacopladas
+    // revisa uno por uno todos los campos del formulario usando las reglas de validacion
     fun validarFormulario(): Boolean {
         val actual = _estado.value
         val pideRut = actual.colaboracion == "Alianza empresarial"
@@ -221,7 +222,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         return !hayErrores
     }
 
-    // registra una nueva solicitud en room con folio correlativo y limpia el formulario
+    // guarda la solicitud en sqlite: si hay internet queda recibida y si no pendiente sin red
     fun guardarEnSqlite(hayInternet: Boolean, onGuardado: () -> Unit = {}) {
         val actual = _estado.value
         val fechaHoy = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
@@ -241,21 +242,21 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         )
 
         viewModelScope.launch {
-            // guarda en room y toma el id generado para formatear un folio correlativo unico
+            // guarda en la base de datos y arma un folio correlativo unico como al-2026-0001
             val nuevoId = solicitudDao.insertarSolicitud(solicitudInicial)
             val folioGenerado = String.format(Locale.getDefault(), "AL-2026-%04d", nuevoId)
             val solicitudFinal = solicitudInicial.copy(id = nuevoId.toInt(), folio = folioGenerado)
             solicitudDao.actualizarSolicitud(solicitudFinal)
             _solicitudSeleccionada.value = solicitudFinal
 
-            // limpia el formulario tras el envio para evitar datos pegados
+            // borra lo que habia en los campos del formulario para dejarlo limpio
             limpiarFormularioContacto()
 
             onGuardado()
         }
     }
 
-    // limpia los campos del formulario de contacto tras un envio exitoso
+    // deja todos los campos del formulario en blanco para una nueva solicitud
     fun limpiarFormularioContacto() {
         _estado.update {
             it.copy(
@@ -270,7 +271,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // reinicia la sesion activa y limpia formularios preservando el correo si eligio recordarme
+    // cierra la sesion del usuario pero conserva el correo si marco recordarme
     fun cerrarSesion() {
         val recordar = _estado.value.recordarCorreo
         val correo = if (recordar) _estado.value.correoLogin else CredencialesPrueba.CORREO
@@ -282,7 +283,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         _solicitudSeleccionada.value = null
     }
 
-    // actualiza a estado recibida las solicitudes guardadas sin conexion previa
+    // busca las solicitudes que se guardaron sin internet y las cambia a estado recibida
     fun sincronizarPendientes() {
         viewModelScope.launch {
             solicitudDao.sincronizarPendientes()
@@ -294,7 +295,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // remueve una solicitud almacenada en la base de datos sqlite
+    // borra una solicitud de la base de datos cuando el usuario toca el icono de basurero
     fun eliminarSolicitud(solicitud: SolicitudEntity) {
         viewModelScope.launch {
             solicitudDao.eliminarSolicitud(solicitud)

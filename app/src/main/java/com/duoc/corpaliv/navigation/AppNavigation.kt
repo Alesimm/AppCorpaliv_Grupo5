@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.navigation
 
-// enrutador central con navegacion por eventos, control de back stack y menu lateral
-// se conecta con mainviewmodel, usuarioviewmodel, estadodatastore, screen y las 9 pantallas
+// mapa central de rutas que conecta todas las pantallas y el menu lateral
+// decide que pantalla mostrar segun las ordenes que recibe de los viewmodels
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.DrawerValue
@@ -31,7 +31,7 @@ import com.duoc.corpaliv.viewmodel.MainViewModel
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 import kotlinx.coroutines.launch
 
-// gestiona la navegacion global de la aplicacion y el ciclo de vida del back stack
+// funcion principal que dibuja el menu lateral y el contenedor de pantallas
 @Composable
 fun AppNavigation(
     mainViewModel: MainViewModel = viewModel(),
@@ -46,15 +46,16 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route ?: Screen.Login.route
 
-    // cierra el menu lateral con el boton atras en lugar de salir de la aplicacion
+    // si el menu lateral esta abierto el boton atras del telefono solo lo cierra
     BackHandler(enabled = drawerState.isOpen) {
         scope.launch { drawerState.close() }
     }
 
-    // recolecta ordenes de navegacion desacopladas y gestiona popupto y guardado de estado
+    // escucha las ordenes de navegacion en segundo plano y cambia de pantalla
     LaunchedEffect(Unit) {
         mainViewModel.navigationEvents.collect { evento ->
             when (evento) {
+                // abre la pantalla solicitada
                 is NavigationEvent.NavigateTo -> {
                     if (evento.screen == Screen.Home) {
                         if (!navController.popBackStack(Screen.Home.route, false)) {
@@ -66,7 +67,7 @@ fun AppNavigation(
                         }
                     }
                 }
-                // navegacion de barra inferior con retorno directo a home sin retener pantallas intermedias
+                // navegacion de barra inferior que vuelve a inicio sin acumular pantallas
                 is NavigationEvent.NavigateBottom -> {
                     if (evento.screen == Screen.Home) {
                         if (!navController.popBackStack(Screen.Home.route, false)) {
@@ -81,7 +82,7 @@ fun AppNavigation(
                         }
                     }
                 }
-                // popupto inclusive para remover el login del historial al entrar al home
+                // entra a inicio y borra el login del historial para no volver atras
                 is NavigationEvent.LoginExitoso -> {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) {
@@ -90,7 +91,7 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 }
-                // vacia el back stack por completo y regresa a login reiniciando sesion
+                // cierra la sesion, limpia el historial completo y regresa al login
                 is NavigationEvent.CerrarSesion -> {
                     usuarioViewModel.cerrarSesion()
                     navController.navigate(Screen.Login.route) {
@@ -100,6 +101,7 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 }
+                // vuelve a la pantalla inmediatamente anterior
                 is NavigationEvent.PopBackStack -> {
                     navController.popBackStack()
                 }
@@ -140,6 +142,7 @@ fun AppNavigation(
             navController = navController,
             startDestination = Screen.Login.route
         ) {
+            // pantalla 1: inicio de sesion
             composable(Screen.Login.route) {
                 LoginScreen(
                     viewModel = usuarioViewModel,
@@ -147,6 +150,7 @@ fun AppNavigation(
                 )
             }
 
+            // pantalla 2: inicio con saludo y programas destacados
             composable(Screen.Home.route) {
                 HomeScreen(
                     usuarioViewModel = usuarioViewModel,
@@ -164,6 +168,7 @@ fun AppNavigation(
                 )
             }
 
+            // pantalla 3: catalogo con los programas disponibles
             composable(Screen.Catalogo.route) {
                 CatalogScreen(
                     estadoViewModel = estadoViewModel,
@@ -178,6 +183,7 @@ fun AppNavigation(
                 )
             }
 
+            // pantalla 4: favoritos guardados por el usuario
             composable(Screen.Favoritos.route) {
                 CatalogScreen(
                     estadoViewModel = estadoViewModel,
@@ -192,6 +198,7 @@ fun AppNavigation(
                 )
             }
 
+            // pantalla 5: detalle completo de un programa seleccionado
             composable(Screen.Detalle.route) {
                 DetalleScreen(
                     usuarioViewModel = usuarioViewModel,
@@ -201,6 +208,7 @@ fun AppNavigation(
                 )
             }
 
+            // pantalla 6: formulario para enviar una propuesta de ayuda
             composable(Screen.Contacto.route) {
                 ContactScreen(
                     viewModel = usuarioViewModel,
@@ -211,6 +219,7 @@ fun AppNavigation(
                 )
             }
 
+            // pantalla 7: comprobante con el folio de la solicitud enviada
             composable(Screen.Resumen.route) {
                 ResumenScreen(
                     viewModel = usuarioViewModel,
@@ -221,6 +230,7 @@ fun AppNavigation(
                 )
             }
 
+            // pantalla 8: informacion de la fundacion corpaliv
             composable(Screen.AcercaDe.route) {
                 AcercaDeScreen(
                     alAbrirMenu = abrirMenu,
@@ -229,6 +239,7 @@ fun AppNavigation(
                 )
             }
 
+            // pantalla 9: perfil del usuario con su historial de solicitudes
             composable(Screen.Perfil.route) {
                 PerfilScreen(
                     usuarioViewModel = usuarioViewModel,
@@ -240,6 +251,7 @@ fun AppNavigation(
                 )
             }
 
+            // pantalla 10: configuracion para activar alertas y cambiar tema visual
             composable(Screen.Estado.route) {
                 EstadoScreen(
                     alVolver = { mainViewModel.navegarA(Screen.Home) },

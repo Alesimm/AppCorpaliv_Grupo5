@@ -1,5 +1,8 @@
 package com.duoc.corpaliv.ui.components
 
+// piezas visuales reutilizables que se usan en varias pantallas de la app
+// contiene la barra superior, la barra inferior, el menu lateral y los botones
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -41,7 +44,7 @@ import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalAlternarTema
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 
-// barra superior del mockup con icono de menu lateral, titulo espaciado y avatar de perfil
+// barra superior que muestra el titulo, el boton del menu y la foto de perfil
 @Composable
 fun AppTopBar(
     titulo: String = "",
@@ -103,7 +106,7 @@ fun AppTopBar(
     }
 }
 
-// avatar circular estilizado del colaborador mostrado en la esquina superior y en perfil
+// foto circular de perfil del usuario que al tocarla abre su perfil
 @Composable
 fun AvatarColaborador(
     tamano: Int = 36,
@@ -128,7 +131,7 @@ fun AvatarColaborador(
     }
 }
 
-// barra de navegacion inferior del mockup con las pestanas inicio, catalogo y contacto
+// barra de tres botones en la parte de abajo: inicio, catalogo y contacto
 @Composable
 fun AppBottomBar(
     rutaActual: String,
@@ -170,6 +173,7 @@ fun AppBottomBar(
     }
 }
 
+// boton individual de la barra inferior con su icono, texto y rayita naranja
 @Composable
 private fun ItemBarraInferior(
     etiqueta: String,
@@ -208,7 +212,7 @@ private fun ItemBarraInferior(
     }
 }
 
-// panel de menu lateral desplegable identico a la lamina 3 del mockup
+// menu que se abre desde el lado izquierdo con accesos a favoritos y ajustes
 @Composable
 fun AppDrawerContent(
     alCerrarMenu: () -> Unit,
@@ -319,6 +323,7 @@ fun AppDrawerContent(
     }
 }
 
+// opcion dentro del menu lateral con su icono y texto explicativo
 @Composable
 private fun ItemMenuLateral(
     texto: String,
@@ -347,7 +352,7 @@ private fun ItemMenuLateral(
     }
 }
 
-// boton principal blanco de alto contraste usado en todas las pantallas del mockup
+// boton grande y blanco usado para las acciones principales como enviar o ingresar
 @Composable
 fun BotonPrincipal(
     texto: String,
@@ -376,7 +381,7 @@ fun BotonPrincipal(
     }
 }
 
-// boton secundario oscuro con borde fino usado en acciones secundarias del mockup
+// boton con borde fino usado para acciones secundarias como volver o llamar
 @Composable
 fun BotonSecundario(
     texto: String,
@@ -404,7 +409,7 @@ fun BotonSecundario(
     }
 }
 
-// tarjeta desplegable para el directorio de contactos de corpaliv
+// tarjeta que se toca para desplegar los telefonos y correos de contacto
 @Composable
 fun TarjetaContactoDesplegable(
     area: String,
