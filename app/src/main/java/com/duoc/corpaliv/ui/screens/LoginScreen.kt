@@ -37,6 +37,7 @@ import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
+import com.duoc.corpaliv.validation.validarCorreo
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
 // pantalla de inicio de sesion con logo de corpaliv y campos de acceso
@@ -58,8 +59,6 @@ fun LoginScreen(
     var errorCorreoRecuperacion by remember { mutableStateOf<String?>(null) }
     var mensajeRecuperacionEnviado by remember { mutableStateOf(false) }
 
-    // regla simple para revisar que el correo tenga formato de email valido
-    val regexCorreo = remember { Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$") }
 
     // ventana emergente de ayuda para recuperar la clave de acceso
     if (mostrarDialogoOlvido) {
@@ -118,9 +117,10 @@ fun LoginScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // revisa que el correo este bien escrito antes de simular el envio
-                        if (correoRecuperacion.isBlank() || !regexCorreo.matches(correoRecuperacion.trim())) {
-                            errorCorreoRecuperacion = "Ingresa un correo con formato válido"
+                        // revisa el correo usando la funcion de validacion centralizada
+                        val error = validarCorreo(correoRecuperacion)
+                        if (error != null) {
+                            errorCorreoRecuperacion = error
                             mensajeRecuperacionEnviado = false
                         } else {
                             errorCorreoRecuperacion = null

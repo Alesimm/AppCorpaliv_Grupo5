@@ -31,9 +31,13 @@ fun llamarPorTelefono(context: Context, numero: String) {
 
 // funcion que abre la ventana para enviar el texto por whatsapp, correo o mensaje
 fun compartirTextoNativo(context: Context, texto: String) {
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, texto)
+    try {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, texto)
+        }
+        context.startActivity(Intent.createChooser(intent, "compartir informacion de corpaliv"))
+    } catch (e: Exception) {
+        Toast.makeText(context, "no hay aplicacion para compartir informacion", Toast.LENGTH_SHORT).show()
     }
-    context.startActivity(Intent.createChooser(intent, "compartir informacion de corpaliv"))
 }

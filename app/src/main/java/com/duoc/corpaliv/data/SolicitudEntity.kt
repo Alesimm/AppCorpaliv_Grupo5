@@ -17,7 +17,6 @@ data class SolicitudEntity(
     val programa: String = "",
     val nombre: String = "",
     val correo: String = "",
-    val direccion: String = "",
     val rutComercial: String = "",
     val mensaje: String = "",
     val estadoEnvio: String = ""

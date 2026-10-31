@@ -8,7 +8,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [SolicitudEntity::class], version = 2, exportSchema = false)
+@Database(entities = [SolicitudEntity::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     // entrega las funciones para guardar, leer, editar y borrar solicitudes
