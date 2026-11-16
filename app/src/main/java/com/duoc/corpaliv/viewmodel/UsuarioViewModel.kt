@@ -14,7 +14,8 @@ import com.duoc.corpaliv.model.UsuarioErrores
 import com.duoc.corpaliv.model.UsuarioUiState
 import com.duoc.corpaliv.model.listaProgramasAlbaLab
 import com.duoc.corpaliv.validation.CredencialesPrueba
-import com.duoc.corpaliv.validation.validarClave
+import com.duoc.corpaliv.validation.validarApellido
+import com.duoc.corpaliv.validation.validarClaveLogin
 import com.duoc.corpaliv.validation.validarColaboracion
 import com.duoc.corpaliv.validation.validarCorreo
 import com.duoc.corpaliv.validation.validarCredencialesLogin
@@ -67,12 +68,12 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
 
     // actualiza el texto del correo mientras el usuario escribe en el login
     fun onCorreoLoginChange(valor: String) {
-        _estado.update { it.copy(correoLogin = valor, errorLoginCorreo = null) }
+        _estado.update { it.copy(correoLogin = valor, errorLoginCorreo = null, errorLoginClave = null) }
     }
 
     // actualiza el texto de la clave mientras el usuario escribe en el login
     fun onClaveLoginChange(valor: String) {
-        _estado.update { it.copy(claveLogin = valor, errorLoginClave = null) }
+        _estado.update { it.copy(claveLogin = valor, errorLoginCorreo = null, errorLoginClave = null) }
     }
 
     // activa o desactiva la casilla recordarme y borra el dato si se desmarca
@@ -85,11 +86,11 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // revisa que el correo y la clave no esten vacios y coincidan con el usuario de prueba
+    // revisa que el correo y la clave no esten vacios y coincidan sin dar pistas de cual fallo
     fun validarLogin(): Boolean {
         val actual = _estado.value
         val errorCorreo = validarCorreo(actual.correoLogin)
-        val errorClave = validarClave(actual.claveLogin)
+        val errorClave = validarClaveLogin(actual.claveLogin)
 
         if (errorCorreo != null || errorClave != null) {
             _estado.update {
@@ -101,12 +102,12 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             return false
         }
 
-        // revisa contra las credenciales del caso: colaborador@ejemplo.cl y alba2026!
+        // revisa contra las credenciales del caso sin revelar si fallo el correo o la clave
         val errorCredenciales = validarCredencialesLogin(actual.correoLogin, actual.claveLogin)
         if (errorCredenciales != null) {
             _estado.update {
                 it.copy(
-                    errorLoginCorreo = null,
+                    errorLoginCorreo = "",
                     errorLoginClave = errorCredenciales
                 )
             }
@@ -163,6 +164,11 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         _estado.update { it.copy(nombre = valor, errores = it.errores.copy(nombre = null)) }
     }
 
+    // actualiza el apellido del colaborador y borra el error en rojo si lo corrige
+    fun onApellidoChange(valor: String) {
+        _estado.update { it.copy(apellido = valor, errores = it.errores.copy(apellido = null)) }
+    }
+
     // actualiza el correo del formulario y borra el error en rojo si lo corrige
     fun onCorreoChange(valor: String) {
         _estado.update { it.copy(correo = valor, errores = it.errores.copy(correo = null)) }
@@ -204,6 +210,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
 
         val errores = UsuarioErrores(
             nombre = validarNombre(actual.nombre),
+            apellido = validarApellido(actual.apellido),
             correo = validarCorreo(actual.correo),
             colaboracion = validarColaboracion(actual.colaboracion),
             rutComercial = errorRut,
@@ -212,6 +219,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
 
         val hayErrores = listOfNotNull(
             errores.nombre,
+            errores.apellido,
             errores.correo,
             errores.colaboracion,
             errores.rutComercial,
@@ -233,7 +241,8 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             fecha = fechaHoy,
             colaboracion = actual.colaboracion,
             programa = actual.programa.ifBlank { listaProgramasAlbaLab.first().titulo },
-            nombre = actual.nombre,
+            nombre = actual.nombre.trim(),
+            apellido = actual.apellido.trim(),
             correo = actual.correo,
             rutComercial = if (actual.rutComercial.isBlank()) "No aplica" else actual.rutComercial,
             mensaje = if (actual.mensaje.isBlank()) "Sin mensaje adicional." else actual.mensaje,
@@ -260,6 +269,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         _estado.update {
             it.copy(
                 nombre = "",
+                apellido = "",
                 correo = "",
                 colaboracion = "",
                 programa = "",
@@ -294,13 +304,39 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // borra una solicitud de la base de datos cuando el usuario toca el icono de basurero
+    // borra una solicitud de la base de datos cuando el usuario confirma en el dialogo
     fun eliminarSolicitud(solicitud: SolicitudEntity) {
         viewModelScope.launch {
             solicitudDao.eliminarSolicitud(solicitud)
             if (_solicitudSeleccionada.value?.id == solicitud.id) {
                 _solicitudSeleccionada.value = null
             }
+        }
+    }
+
+    // actualiza los datos editados de una solicitud ya guardada en sqlite
+    fun actualizarSolicitudExistente(
+        solicitud: SolicitudEntity,
+        nuevaColaboracion: String,
+        nuevoRut: String,
+        nuevoMensaje: String
+    ) {
+        val rutFinal = if (nuevaColaboracion == "Alianza empresarial") {
+            nuevoRut.trim()
+        } else {
+            "No aplica"
+        }
+        val mensajeFinal = nuevoMensaje.trim().ifBlank { "Sin mensaje adicional." }
+
+        val solicitudActualizada = solicitud.copy(
+            colaboracion = nuevaColaboracion,
+            rutComercial = rutFinal,
+            mensaje = mensajeFinal
+        )
+
+        viewModelScope.launch {
+            solicitudDao.actualizarSolicitud(solicitudActualizada)
+            _solicitudSeleccionada.value = solicitudActualizada
         }
     }
 }
