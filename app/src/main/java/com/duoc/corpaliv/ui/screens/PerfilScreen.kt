@@ -13,11 +13,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.duoc.corpaliv.data.SolicitudEntity
 import com.duoc.corpaliv.navigation.Screen
 import com.duoc.corpaliv.ui.components.AppBottomBar
 import com.duoc.corpaliv.ui.components.AppTopBar
@@ -25,6 +29,7 @@ import com.duoc.corpaliv.ui.components.AvatarColaborador
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
+import com.duoc.corpaliv.ui.theme.AlbaError
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
@@ -47,6 +52,43 @@ fun PerfilScreen(
     val estado by usuarioViewModel.estado.collectAsState()
     val solicitudes by usuarioViewModel.listaSolicitudes.collectAsState()
     val favoritos by estadoViewModel.favoritos.collectAsState()
+
+    // guarda temporalmente la solicitud que el usuario quiere borrar para pedir confirmacion
+    var solicitudAEliminar by remember { mutableStateOf<SolicitudEntity?>(null) }
+
+    // ventana de confirmacion para evitar borrados accidentales
+    solicitudAEliminar?.let { solicitud ->
+        AlertDialog(
+            onDismissRequest = { solicitudAEliminar = null },
+            containerColor = AlbaCard,
+            titleContentColor = AlbaWhite,
+            textContentColor = AlbaTextSecondary,
+            title = {
+                Text(
+                    text = "Confirmar eliminación",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("¿Estás seguro de que deseas eliminar la solicitud ${solicitud.folio}? Esta acción no se puede deshacer.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        usuarioViewModel.eliminarSolicitud(solicitud)
+                        solicitudAEliminar = null
+                    }
+                ) {
+                    Text("ELIMINAR", color = AlbaError, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { solicitudAEliminar = null }) {
+                    Text("CANCELAR", color = AlbaTextSecondary)
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -237,9 +279,9 @@ fun PerfilScreen(
                                     }
                                 }
 
-                                // boton para borrar esta solicitud de la base de datos
+                                // boton para pedir confirmacion antes de borrar la solicitud
                                 IconButton(
-                                    onClick = { usuarioViewModel.eliminarSolicitud(item) }
+                                    onClick = { solicitudAEliminar = item }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.DeleteOutline,

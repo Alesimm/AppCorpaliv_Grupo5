@@ -3,7 +3,9 @@ package com.duoc.corpaliv.ui.screens
 // comprobante con el numero de folio de la solicitud enviada
 // muestra los datos guardados en la base de datos y si se envio o quedo pendiente
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -11,10 +13,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -30,9 +36,12 @@ import com.duoc.corpaliv.ui.components.BotonSecundario
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
+import com.duoc.corpaliv.ui.theme.AlbaError
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
+import com.duoc.corpaliv.validation.validarMensaje
+import com.duoc.corpaliv.validation.validarRut
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
 // dibuja el comprobante oficial con su folio correlativo y estado de red
@@ -95,6 +104,9 @@ fun ResumenScreen(
             ContenidoComprobante(
                 solicitud = item,
                 modifier = Modifier.padding(innerPadding),
+                alEditarSolicitud = { nuevaColab, nuevoRut, nuevoMsg ->
+                    viewModel.actualizarSolicitudExistente(item, nuevaColab, nuevoRut, nuevoMsg)
+                },
                 alIrAInicio = alIrAInicio,
                 alIrAPerfil = alIrAPerfil
             )
@@ -107,9 +119,23 @@ fun ResumenScreen(
 private fun ContenidoComprobante(
     solicitud: SolicitudEntity,
     modifier: Modifier = Modifier,
+    alEditarSolicitud: (String, String, String) -> Unit,
     alIrAInicio: () -> Unit,
     alIrAPerfil: () -> Unit
 ) {
+    var mostrarDialogoEditar by remember { mutableStateOf(false) }
+
+    if (mostrarDialogoEditar) {
+        DialogoEditarSolicitud(
+            solicitud = solicitud,
+            alCerrar = { mostrarDialogoEditar = false },
+            alGuardar = { nuevaColab, nuevoRut, nuevoMsg ->
+                alEditarSolicitud(nuevaColab, nuevoRut, nuevoMsg)
+                mostrarDialogoEditar = false
+            }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -217,6 +243,8 @@ private fun ContenidoComprobante(
                 HorizontalDivider(color = AlbaBorder)
                 FilaComprobante(titulo = "Nombre", valor = solicitud.nombre)
                 HorizontalDivider(color = AlbaBorder)
+                FilaComprobante(titulo = "Apellido", valor = solicitud.apellido.ifBlank { "-" })
+                HorizontalDivider(color = AlbaBorder)
                 FilaComprobante(titulo = "Correo", valor = solicitud.correo)
                 HorizontalDivider(color = AlbaBorder)
                 FilaComprobante(titulo = "RUT comercial", valor = solicitud.rutComercial)
@@ -227,7 +255,14 @@ private fun ContenidoComprobante(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // botones para ir a ver todas las solicitudes o volver a inicio
+        // botones para editar, ir a ver todas las solicitudes o volver a inicio
+        BotonSecundario(
+            texto = "EDITAR SOLICITUD",
+            alHacerClick = { mostrarDialogoEditar = true }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         BotonSecundario(
             texto = "MIS SOLICITUDES",
             alHacerClick = alIrAPerfil
@@ -267,4 +302,162 @@ private fun FilaComprobante(titulo: String, valor: String) {
             textAlign = TextAlign.End
         )
     }
+}
+
+// ventana emergente para editar la colaboracion, rut y mensaje de una solicitud
+@Composable
+private fun DialogoEditarSolicitud(
+    solicitud: SolicitudEntity,
+    alCerrar: () -> Unit,
+    alGuardar: (String, String, String) -> Unit
+) {
+    val opcionesColaboracion = listOf(
+        "Donación",
+        "Alianza empresarial",
+        "Voluntariado",
+        "Compra de productos",
+        "Capacitación"
+    )
+    var colaboracion by remember { mutableStateOf(solicitud.colaboracion) }
+    var rutComercial by remember {
+        mutableStateOf(if (solicitud.rutComercial == "No aplica") "" else solicitud.rutComercial)
+    }
+    var mensaje by remember {
+        mutableStateOf(if (solicitud.mensaje == "Sin mensaje adicional.") "" else solicitud.mensaje)
+    }
+    var menuAbierto by remember { mutableStateOf(false) }
+    var errorRut by remember { mutableStateOf<String?>(null) }
+    var errorMensaje by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = alCerrar,
+        containerColor = AlbaCard,
+        titleContentColor = AlbaWhite,
+        textContentColor = AlbaTextSecondary,
+        title = {
+            Text(
+                text = "Editar solicitud",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Folio ${solicitud.folio}",
+                    color = AlbaOrange,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                // selector del tipo de colaboracion
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
+                            .background(AlbaBlack, RoundedCornerShape(2.dp))
+                            .clickable { menuAbierto = true }
+                            .padding(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = colaboracion, color = AlbaWhite, fontSize = 14.sp)
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = AlbaTextSecondary
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuAbierto,
+                        onDismissRequest = { menuAbierto = false },
+                        modifier = Modifier.background(AlbaCard)
+                    ) {
+                        opcionesColaboracion.forEach { opcion ->
+                            DropdownMenuItem(
+                                text = { Text(text = opcion, color = AlbaWhite) },
+                                onClick = {
+                                    colaboracion = opcion
+                                    if (opcion != "Alianza empresarial") errorRut = null
+                                    menuAbierto = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // si es alianza empresarial se muestra el campo rut
+                if (colaboracion == "Alianza empresarial") {
+                    OutlinedTextField(
+                        value = rutComercial,
+                        onValueChange = {
+                            rutComercial = it
+                            errorRut = null
+                        },
+                        label = { Text("RUT comercial") },
+                        placeholder = { Text("12345678-5", color = AlbaTextSecondary) },
+                        isError = errorRut != null,
+                        supportingText = {
+                            errorRut?.let { Text(text = it, color = AlbaError) }
+                        },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = AlbaBlack,
+                            unfocusedContainerColor = AlbaBlack,
+                            focusedBorderColor = AlbaOrange,
+                            unfocusedBorderColor = AlbaBorder,
+                            focusedTextColor = AlbaWhite,
+                            unfocusedTextColor = AlbaWhite
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // campo para editar el mensaje adicional
+                OutlinedTextField(
+                    value = mensaje,
+                    onValueChange = {
+                        mensaje = it
+                        errorMensaje = null
+                    },
+                    label = { Text("Mensaje") },
+                    minLines = 3,
+                    isError = errorMensaje != null,
+                    supportingText = {
+                        errorMensaje?.let { Text(text = it, color = AlbaError) }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = AlbaBlack,
+                        unfocusedContainerColor = AlbaBlack,
+                        focusedBorderColor = AlbaOrange,
+                        unfocusedBorderColor = AlbaBorder,
+                        focusedTextColor = AlbaWhite,
+                        unfocusedTextColor = AlbaWhite
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val errR = if (colaboracion == "Alianza empresarial") validarRut(rutComercial) else null
+                    val errM = validarMensaje(mensaje)
+                    errorRut = errR
+                    errorMensaje = errM
+                    if (errR == null && errM == null) {
+                        alGuardar(colaboracion, rutComercial, mensaje)
+                    }
+                }
+            ) {
+                Text("GUARDAR", color = AlbaOrange, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = alCerrar) {
+                Text("CANCELAR", color = AlbaTextSecondary)
+            }
+        }
+    )
 }

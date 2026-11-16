@@ -216,7 +216,9 @@ fun LoginScreen(
                 isError = estado.errorLoginCorreo != null,
                 supportingText = {
                     estado.errorLoginCorreo?.let {
-                        Text(text = it, color = AlbaError)
+                        if (it.isNotBlank()) {
+                            Text(text = it, color = AlbaError)
+                        }
                     }
                 },
                 singleLine = true,
@@ -246,7 +248,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = estado.claveLogin,
                 onValueChange = viewModel::onClaveLoginChange,
-                placeholder = { Text("Mínimo 8 caracteres", color = AlbaTextSecondary) },
+                placeholder = { Text("Ingresa tu contraseña", color = AlbaTextSecondary) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Lock,
