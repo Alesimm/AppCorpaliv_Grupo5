@@ -13,42 +13,65 @@ object CredencialesPrueba {
 fun validarCorreo(correo: String): String? {
     val texto = correo.trim()
     if (texto.isEmpty()) {
-        return "Ingresa tu correo electronico"
+        return "Por favor, ingresa tu correo electrónico."
     }
     val regex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
     if (!regex.matches(texto)) {
-        return "Ingresa un correo valido (ej: nombre@dominio.cl)"
+        return "El formato del correo electrónico no es válido (ej: nombre@dominio.cl)."
     }
     return null
 }
 
-// revisa que la clave tenga al menos 8 letras o numeros y combine ambos
+// revisa que la clave tenga al menos 8 letras o numeros y combine ambos (regla general)
 fun validarClave(clave: String): String? {
     if (clave.isEmpty()) {
-        return "Ingresa tu contrasena"
+        return "Por favor, ingresa tu contraseña."
     }
     if (clave.length < 8) {
-        return "La contrasena debe tener minimo 8 caracteres"
+        return "La contraseña debe tener mínimo 8 caracteres."
     }
     val tieneLetra = clave.any { it.isLetter() }
     val tieneNumero = clave.any { it.isDigit() }
     if (!tieneLetra || !tieneNumero) {
-        return "La contrasena debe incluir al menos una letra y un numero"
+        return "La contraseña debe incluir al menos una letra y un número."
     }
     return null
 }
 
-// revisa que el nombre tenga minimo 3 letras y no tenga numeros
+// en el login solo revisamos que la contraseña no venga vacia para no dar pistas de formato
+fun validarClaveLogin(clave: String): String? {
+    if (clave.isEmpty()) {
+        return "Por favor, ingresa tu contraseña."
+    }
+    return null
+}
+
+// revisa que el nombre tenga minimo 2 letras y no tenga numeros
 fun validarNombre(nombre: String): String? {
     val texto = nombre.trim()
     if (texto.isEmpty()) {
-        return "Ingresa tu nombre y apellido"
+        return "Ingresa tu nombre"
     }
-    if (texto.length < 3) {
-        return "El nombre debe tener al menos 3 caracteres"
+    if (texto.length < 2) {
+        return "El nombre debe tener al menos 2 caracteres"
     }
     if (texto.any { it.isDigit() }) {
         return "El nombre no puede contener numeros"
+    }
+    return null
+}
+
+// revisa que el apellido tenga minimo 2 letras y no tenga numeros
+fun validarApellido(apellido: String): String? {
+    val texto = apellido.trim()
+    if (texto.isEmpty()) {
+        return "Ingresa tu apellido"
+    }
+    if (texto.length < 2) {
+        return "El apellido debe tener al menos 2 caracteres"
+    }
+    if (texto.any { it.isDigit() }) {
+        return "El apellido no puede contener numeros"
     }
     return null
 }
@@ -83,12 +106,12 @@ fun validarMensaje(mensaje: String): String? {
     return null
 }
 
-// compara el correo y la clave ingresados contra el usuario de prueba
+// compara el correo y la contraseña ingresados contra el usuario de prueba
 fun validarCredencialesLogin(correo: String, clave: String): String? {
     val correoCoincide = correo.trim().equals(CredencialesPrueba.CORREO, ignoreCase = true)
     val claveCoincide = clave == CredencialesPrueba.CLAVE
     if (!correoCoincide || !claveCoincide) {
-        return "Correo o clave incorrectos"
+        return "Correo electrónico o contraseña incorrectos. Verifica tus credenciales."
     }
     return null
 }

@@ -100,12 +100,12 @@ fun ContactScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // campo para ingresar el nombre completo sin numeros
+            // campo para ingresar el nombre sin numeros
             EtiquetaCampo("NOMBRE")
             OutlinedTextField(
                 value = estado.nombre,
                 onValueChange = viewModel::onNombreChange,
-                placeholder = { Text("Nombre y apellido", color = AlbaTextSecondary) },
+                placeholder = { Text("Tu nombre", color = AlbaTextSecondary) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Person,
@@ -117,6 +117,31 @@ fun ContactScreen(
                 isError = estado.errores.nombre != null,
                 supportingText = {
                     estado.errores.nombre?.let { Text(text = it, color = AlbaError) }
+                },
+                shape = RoundedCornerShape(2.dp),
+                colors = coloresInputAlba(),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // campo separado para ingresar el apellido sin numeros
+            EtiquetaCampo("APELLIDO")
+            OutlinedTextField(
+                value = estado.apellido,
+                onValueChange = viewModel::onApellidoChange,
+                placeholder = { Text("Tu apellido", color = AlbaTextSecondary) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = AlbaTextSecondary
+                    )
+                },
+                singleLine = true,
+                isError = estado.errores.apellido != null,
+                supportingText = {
+                    estado.errores.apellido?.let { Text(text = it, color = AlbaError) }
                 },
                 shape = RoundedCornerShape(2.dp),
                 colors = coloresInputAlba(),

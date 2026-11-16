@@ -4,6 +4,7 @@ package com.duoc.corpaliv.model
 // si un campo esta bien escrito su valor es null y no muestra nada en la pantalla
 data class UsuarioErrores(
     val nombre: String? = null,
+    val apellido: String? = null,
     val correo: String? = null,
     val colaboracion: String? = null,
     val rutComercial: String? = null,

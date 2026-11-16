@@ -15,6 +15,7 @@ data class UsuarioUiState(
     val nombreUsuarioActivo: String = "",
     val correoUsuarioActivo: String = "",
     val nombre: String = "",
+    val apellido: String = "",
     val correo: String = "",
     val colaboracion: String = "",
     val programa: String = "",

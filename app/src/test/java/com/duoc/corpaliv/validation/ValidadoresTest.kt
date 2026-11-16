@@ -23,7 +23,7 @@ class ValidadoresTest {
     fun validarCorreo_conCorreoInvalido_retornaError() {
         val resultado = validarCorreo("correo-sin-arroba")
         assertNotNull(resultado)
-        assertEquals("Ingresa un correo valido (ej: nombre@dominio.cl)", resultado)
+        assertEquals("El formato del correo electrónico no es válido (ej: nombre@dominio.cl).", resultado)
     }
 
     // prueba 3: revisa que una clave corta de menos de 8 letras sea rechazada
@@ -31,7 +31,7 @@ class ValidadoresTest {
     fun validarClave_conClaveCorta_retornaError() {
         val resultado = validarClave("Alba1")
         assertNotNull(resultado)
-        assertEquals("La contrasena debe tener minimo 8 caracteres", resultado)
+        assertEquals("La contraseña debe tener mínimo 8 caracteres.", resultado)
     }
 
     // prueba 4: revisa que un rut con guion y digito verificador sea aceptado
@@ -56,6 +56,6 @@ class ValidadoresTest {
         assertNull(correcto)
 
         val claveErronea = validarCredencialesLogin("colaborador@ejemplo.cl", "ClaveErronea1")
-        assertEquals("Correo o clave incorrectos", claveErronea)
+        assertEquals("Correo electrónico o contraseña incorrectos. Verifica tus credenciales.", claveErronea)
     }
 }
