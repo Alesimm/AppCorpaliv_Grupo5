@@ -90,6 +90,7 @@ import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
@@ -465,9 +466,31 @@ fun SkeletonComprobantePulse(
         modifier = modifier
             .fillMaxWidth()
             .padding(20.dp)
-            .graphicsLayer { alpha = opacidad }
     ) {
-        // cabecera simulando el circulo de check y el titulo "Solicitud enviada"
+        // barra superior discreta con los bouncing dots visibles de inmediato sin solapar el skeleton
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 18.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BouncingDotsLoader(color = AlbaOrange, tamanoPunto = 8.dp)
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "Generando comprobante...",
+                color = AlbaTextSecondary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer { alpha = opacidad }
+        ) {
+            // cabecera simulando el circulo de check y el titulo "Solicitud enviada"
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -596,39 +619,43 @@ fun SkeletonComprobantePulse(
             )
             if (i < 2) Spacer(modifier = Modifier.height(12.dp))
         }
+        }
     }
 }
 
-// ticket minimalista animado que traza el circulo, dibuja el check y emite un pulso suave
+// ticket minimalista animado que espera el fin del crossfade, traza el circulo, dibuja el check y emite doble pulso
 @Composable
 fun CheckAnimadoExito(
     modifier: Modifier = Modifier,
     color: Color = AlbaOrange,
-    tamano: Dp = 36.dp
+    tamano: Dp = 40.dp
 ) {
     val progresoCirculo = remember { Animatable(0f) }
     val progresoTicket = remember { Animatable(0f) }
     val progresoPulso = remember { Animatable(0f) }
-    val escalaPop = remember { Animatable(0.85f) }
+    val escalaPop = remember { Animatable(0.80f) }
     val pathCheck = remember { Path() }
 
     LaunchedEffect(Unit) {
-        progresoCirculo.animateTo(1f, tween(340, easing = EaseOutCubic))
+        // pausa breve para que la animacion arranque justo cuando el crossfade ya revelo el comprobante
+        delay(180)
+        progresoCirculo.animateTo(1f, tween(460, easing = EaseOutCubic))
         coroutineScope {
             launch {
-                progresoTicket.animateTo(1f, tween(260, easing = EaseOutCubic))
+                progresoTicket.animateTo(1f, tween(380, easing = EaseOutCubic))
             }
             launch {
+                escalaPop.animateTo(1.12f, tween(180, easing = EaseOutCubic))
                 escalaPop.animateTo(
                     targetValue = 1f,
                     animationSpec = spring(
-                        dampingRatio = 0.52f,
-                        stiffness = Spring.StiffnessMedium
+                        dampingRatio = 0.45f,
+                        stiffness = Spring.StiffnessMediumLow
                     )
                 )
             }
             launch {
-                progresoPulso.animateTo(1f, tween(520, easing = EaseOutCubic))
+                progresoPulso.animateTo(1f, tween(700, easing = EaseOutCubic))
             }
         }
     }
@@ -641,24 +668,34 @@ fun CheckAnimadoExito(
                 scaleY = escalaPop.value
             }
     ) {
-        val trazo = 2.4.dp.toPx()
+        val trazo = 2.8.dp.toPx()
         val centro = Offset(size.width / 2f, size.height / 2f)
         val radioBase = (size.minDimension / 2f) - trazo
 
-        // onda expansiva minimalista que se desvanece alrededor del check
-        if (progresoPulso.value > 0f && progresoPulso.value < 1f) {
-            val alphaOnda = (1f - progresoPulso.value) * 0.45f
+        // doble onda expansiva minimalista alrededor del check para realzar el exito
+        val p = progresoPulso.value
+        if (p > 0f && p < 1f) {
+            val alphaOnda1 = (1f - p) * 0.55f
             drawCircle(
-                color = color.copy(alpha = alphaOnda),
-                radius = radioBase * (1f + 0.45f * progresoPulso.value),
+                color = color.copy(alpha = alphaOnda1),
+                radius = radioBase * (1f + 0.55f * p),
                 center = centro,
-                style = Stroke(width = 1.6.dp.toPx())
+                style = Stroke(width = 2.dp.toPx())
             )
+            if (p > 0.22f) {
+                val p2 = ((p - 0.22f) / 0.78f).coerceIn(0f, 1f)
+                drawCircle(
+                    color = color.copy(alpha = (1f - p2) * 0.35f),
+                    radius = radioBase * (1f + 0.42f * p2),
+                    center = centro,
+                    style = Stroke(width = 1.4.dp.toPx())
+                )
+            }
         }
 
         // relleno tintado suave una vez completado el check
         drawCircle(
-            color = color.copy(alpha = 0.14f * progresoTicket.value),
+            color = color.copy(alpha = 0.16f * progresoTicket.value),
             radius = radioBase,
             center = centro
         )

@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.utils
 
-// utilidad nativa para emitir notificaciones locales visibles (heads-up) sin sonido en android
-// usa canal IMPORTANCE_HIGH silencioso e icono vectorial monocromatico de 24dp
+// utilidad nativa para emitir notificaciones emergentes (heads-up) sin sonido en android
+// usa canal IMPORTANCE_HIGH con setSound(null, null) y micro-vibracion para habilitar el banner visual
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -20,12 +20,13 @@ import com.duoc.corpaliv.R
 
 object NotificacionHelper {
 
-    // canal silencioso de alta importancia para mostrar banner emergente sin sonido
-    private const val CANAL_ID = "corpaliv_alertas_v3"
+    // canal v4: alta prioridad sin sonido, con pulso minimo para que android muestre el banner en pantalla
+    private const val CANAL_ID = "corpaliv_alertas_v4"
     private const val CANAL_NOMBRE = "Alertas CORPALIV"
-    private const val CANAL_DESCRIPCION = "Avisos silenciosos del modo colaborador y confirmaciones de solicitudes."
+    private const val CANAL_DESCRIPCION = "Avisos visuales sin sonido del modo colaborador y solicitudes."
+    private val PATRON_PULSO_SUAVE = longArrayOf(0L, 40L)
 
-    // registra el canal silencioso desde android 8
+    // registra el canal heads-up silencioso desde android 8
     fun asegurarCanal(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val canal = NotificationChannel(
@@ -35,7 +36,8 @@ object NotificacionHelper {
             ).apply {
                 description = CANAL_DESCRIPCION
                 setSound(null, null)
-                enableVibration(false)
+                enableVibration(true)
+                vibrationPattern = PATRON_PULSO_SUAVE
             }
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(canal)
@@ -78,7 +80,7 @@ object NotificacionHelper {
         }
     }
 
-    // dispara una notificacion emergente visual sin sonido y devuelve true si se envio
+    // dispara banner emergente heads-up sin sonido (sin setSilent para que android no oculte el popup)
     fun enviarNotificacion(
         context: Context,
         titulo: String,
@@ -107,7 +109,7 @@ object NotificacionHelper {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setSound(null)
-            .setSilent(true)
+            .setVibrate(PATRON_PULSO_SUAVE)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()

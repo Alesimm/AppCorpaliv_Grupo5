@@ -159,7 +159,7 @@ private fun ContenidoComprobante(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
-            CheckAnimadoExito(tamano = 36.dp)
+            CheckAnimadoExito(tamano = 40.dp)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "Solicitud enviada",
