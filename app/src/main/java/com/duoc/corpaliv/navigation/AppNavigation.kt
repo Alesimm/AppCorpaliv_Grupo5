@@ -1,22 +1,41 @@
 package com.duoc.corpaliv.navigation
 
-// mapa central de rutas que conecta todas las pantallas y el menu lateral
-// decide que pantalla mostrar segun las ordenes que recibe de los viewmodels
+// mapa central de rutas con scaffold persistente, bloqueo de re-click y transiciones minimalistas
+// evita destellos blancos y mantiene fija la barra inferior para animar la pildora en vivo
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.duoc.corpaliv.ui.components.AppBottomBar
 import com.duoc.corpaliv.ui.components.AppDrawerContent
+import com.duoc.corpaliv.ui.components.AppTopBar
 import com.duoc.corpaliv.ui.screens.AcercaDeScreen
 import com.duoc.corpaliv.ui.screens.CatalogScreen
 import com.duoc.corpaliv.ui.screens.ContactScreen
@@ -26,12 +45,26 @@ import com.duoc.corpaliv.ui.screens.HomeScreen
 import com.duoc.corpaliv.ui.screens.LoginScreen
 import com.duoc.corpaliv.ui.screens.PerfilScreen
 import com.duoc.corpaliv.ui.screens.ResumenScreen
+import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 import com.duoc.corpaliv.viewmodel.MainViewModel
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 import kotlinx.coroutines.launch
 
-// funcion principal que dibuja el menu lateral y el contenedor de pantallas
+// titulo mostrado en la barra superior persistente segun la pantalla activa
+private fun tituloParaRuta(ruta: String): String = when (ruta) {
+    Screen.Home.route -> "ALBA LAB"
+    Screen.Catalogo.route -> "CATÁLOGO"
+    Screen.Favoritos.route -> "FAVORITOS"
+    Screen.Contacto.route -> "CONTACTO"
+    Screen.Resumen.route -> "SOLICITUD"
+    Screen.AcercaDe.route -> "ACERCA DE"
+    Screen.Perfil.route -> "CUENTA"
+    Screen.Estado.route -> "CONFIGURACIÓN"
+    else -> "ALBA LAB"
+}
+
+// contenedor principal con menu lateral izquierdo y scaffold persistente
 @Composable
 fun AppNavigation(
     mainViewModel: MainViewModel = viewModel(),
@@ -39,6 +72,7 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
     val usuarioViewModel: UsuarioViewModel = viewModel()
+    val sesion by usuarioViewModel.sesionActiva.collectAsStateWithLifecycle()
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -46,17 +80,20 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route ?: Screen.Login.route
 
-    // si el menu lateral esta abierto el boton atras del telefono solo lo cierra
+    // solo login y detalle ocultan las barras globales
+    val mostrarBarras = rutaActual != Screen.Login.route && rutaActual != Screen.Detalle.route
+
     BackHandler(enabled = drawerState.isOpen) {
         scope.launch { drawerState.close() }
     }
 
-    // escucha las ordenes de navegacion en segundo plano y cambia de pantalla
+    // escucha ordenes de navegacion con guardia anti re-click para no recargar la misma pantalla
     LaunchedEffect(Unit) {
         mainViewModel.navigationEvents.collect { evento ->
+            val actual = navController.currentDestination?.route
             when (evento) {
-                // abre la pantalla solicitada
                 is NavigationEvent.NavigateTo -> {
+                    if (actual == evento.screen.route) return@collect
                     if (evento.screen == Screen.Home) {
                         if (!navController.popBackStack(Screen.Home.route, false)) {
                             navController.navigate(Screen.Home.route) { launchSingleTop = true }
@@ -67,8 +104,8 @@ fun AppNavigation(
                         }
                     }
                 }
-                // navegacion de barra inferior que vuelve a inicio sin acumular pantallas
                 is NavigationEvent.NavigateBottom -> {
+                    if (actual == evento.screen.route) return@collect
                     if (evento.screen == Screen.Home) {
                         if (!navController.popBackStack(Screen.Home.route, false)) {
                             navController.navigate(Screen.Home.route) { launchSingleTop = true }
@@ -82,7 +119,6 @@ fun AppNavigation(
                         }
                     }
                 }
-                // entra a inicio y borra el login del historial para no volver atras
                 is NavigationEvent.LoginExitoso -> {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) {
@@ -91,7 +127,6 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 }
-                // cierra la sesion, limpia el historial completo y regresa al login
                 is NavigationEvent.CerrarSesion -> {
                     usuarioViewModel.cerrarSesion()
                     navController.navigate(Screen.Login.route) {
@@ -101,7 +136,6 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 }
-                // vuelve a la pantalla inmediatamente anterior
                 is NavigationEvent.PopBackStack -> {
                     navController.popBackStack()
                 }
@@ -109,14 +143,16 @@ fun AppNavigation(
         }
     }
 
-    val abrirMenu: () -> Unit = {
-        scope.launch { drawerState.open() }
+    val abrirMenu: () -> Unit = remember(scope, drawerState) {
+        { scope.launch { drawerState.open() } }
     }
 
-    val cerrarMenuYNavegar: (Screen) -> Unit = { destino ->
-        scope.launch {
-            drawerState.close()
-            mainViewModel.navegarA(destino)
+    val cerrarMenuYNavegar: (Screen) -> Unit = remember(scope, drawerState, mainViewModel) {
+        { destino ->
+            scope.launch {
+                drawerState.close()
+                mainViewModel.navegarA(destino)
+            }
         }
     }
 
@@ -125,7 +161,11 @@ fun AppNavigation(
         gesturesEnabled = rutaActual != Screen.Login.route,
         drawerContent = {
             AppDrawerContent(
+                rutaActual = rutaActual,
+                nombreUsuario = sesion.nombre,
+                correoUsuario = sesion.correo,
                 alCerrarMenu = { scope.launch { drawerState.close() } },
+                alIrACuenta = { cerrarMenuYNavegar(Screen.Perfil) },
                 alIrAFavoritos = { cerrarMenuYNavegar(Screen.Favoritos) },
                 alIrAConfiguracion = { cerrarMenuYNavegar(Screen.Estado) },
                 alIrAAcercaDe = { cerrarMenuYNavegar(Screen.AcercaDe) },
@@ -138,128 +178,158 @@ fun AppNavigation(
             )
         }
     ) {
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Login.route
-        ) {
-            // pantalla 1: inicio de sesion
-            composable(Screen.Login.route) {
-                LoginScreen(
-                    viewModel = usuarioViewModel,
-                    alIngresar = { mainViewModel.ingresarAlHome() }
-                )
+        // scaffold unico y persistente: las barras no parpadean y la bottombar anima en vivo
+        Scaffold(
+            containerColor = AlbaBlack,
+            topBar = {
+                if (mostrarBarras) {
+                    AppTopBar(
+                        titulo = tituloParaRuta(rutaActual),
+                        nombreUsuario = sesion.nombre,
+                        alAbrirMenu = abrirMenu
+                    )
+                }
+            },
+            bottomBar = {
+                if (mostrarBarras) {
+                    AppBottomBar(
+                        rutaActual = rutaActual,
+                        alNavegar = { destino -> mainViewModel.navegarBottom(destino) }
+                    )
+                }
             }
+        ) { innerPadding ->
+            // transiciones minimalistas tipo react: respuesta instantanea y asentamiento sutil sin destellos
+            val entradaSutil = fadeIn(tween(260, easing = FastOutSlowInEasing)) +
+                slideInVertically(tween(280, easing = EaseOutCubic)) { it / 40 }
+            val salidaSutil = fadeOut(tween(150, easing = LinearOutSlowInEasing))
 
-            // pantalla 2: inicio con saludo y programas destacados
-            composable(Screen.Home.route) {
-                HomeScreen(
-                    usuarioViewModel = usuarioViewModel,
-                    alAbrirMenu = abrirMenu,
-                    alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alSeleccionarPrograma = { programa ->
-                        usuarioViewModel.seleccionarPrograma(programa)
-                        mainViewModel.navegarA(Screen.Detalle)
-                    },
-                    alSeleccionarColaboracion = { tipo ->
-                        usuarioViewModel.preseleccionarColaboracion(tipo)
-                        mainViewModel.navegarA(Screen.Contacto)
-                    },
-                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
-                )
-            }
+            val entradaDetalle = fadeIn(tween(260, easing = EaseOutCubic)) +
+                slideInHorizontally(tween(300, easing = EaseOutCubic)) { it / 14 }
+            val salidaDetalle = fadeOut(tween(180, easing = LinearOutSlowInEasing)) +
+                slideOutHorizontally(tween(240, easing = EaseOutCubic)) { it / 14 }
 
-            // pantalla 3: catalogo con los programas disponibles
-            composable(Screen.Catalogo.route) {
-                CatalogScreen(
-                    estadoViewModel = estadoViewModel,
-                    soloFavoritos = false,
-                    alAbrirMenu = abrirMenu,
-                    alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alSeleccionarPrograma = { programa ->
-                        usuarioViewModel.seleccionarPrograma(programa)
-                        mainViewModel.navegarA(Screen.Detalle)
-                    },
-                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
-                )
-            }
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Login.route,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(AlbaBlack)
+                    .then(if (mostrarBarras) Modifier.padding(innerPadding) else Modifier),
+                enterTransition = { entradaSutil },
+                exitTransition = { salidaSutil },
+                popEnterTransition = { entradaSutil },
+                popExitTransition = { salidaSutil }
+            ) {
+                composable(
+                    route = Screen.Login.route,
+                    enterTransition = { fadeIn(tween(300)) },
+                    exitTransition = { fadeOut(tween(220)) }
+                ) {
+                    LoginScreen(
+                        viewModel = usuarioViewModel,
+                        alIngresar = { mainViewModel.ingresarAlHome() }
+                    )
+                }
 
-            // pantalla 4: favoritos guardados por el usuario
-            composable(Screen.Favoritos.route) {
-                CatalogScreen(
-                    estadoViewModel = estadoViewModel,
-                    soloFavoritos = true,
-                    alAbrirMenu = abrirMenu,
-                    alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alSeleccionarPrograma = { programa ->
-                        usuarioViewModel.seleccionarPrograma(programa)
-                        mainViewModel.navegarA(Screen.Detalle)
-                    },
-                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
-                )
-            }
+                composable(
+                    route = Screen.Home.route,
+                    enterTransition = {
+                        if (initialState.destination.route == Screen.Login.route) {
+                            fadeIn(tween(360, easing = EaseOutCubic)) +
+                                scaleIn(initialScale = 0.98f, animationSpec = tween(360, easing = EaseOutCubic))
+                        } else {
+                            entradaSutil
+                        }
+                    }
+                ) {
+                    HomeScreen(
+                        usuarioViewModel = usuarioViewModel,
+                        alSeleccionarPrograma = { programa ->
+                            usuarioViewModel.seleccionarPrograma(programa)
+                            mainViewModel.navegarA(Screen.Detalle)
+                        },
+                        alSeleccionarColaboracion = { tipo ->
+                            usuarioViewModel.preseleccionarColaboracion(tipo)
+                            mainViewModel.navegarBottom(Screen.Contacto)
+                        }
+                    )
+                }
 
-            // pantalla 5: detalle completo de un programa seleccionado
-            composable(Screen.Detalle.route) {
-                DetalleScreen(
-                    usuarioViewModel = usuarioViewModel,
-                    estadoViewModel = estadoViewModel,
-                    alVolver = { mainViewModel.volverAtras() },
-                    alQuieroColaborar = { mainViewModel.navegarA(Screen.Contacto) }
-                )
-            }
+                composable(Screen.Catalogo.route) {
+                    CatalogScreen(
+                        estadoViewModel = estadoViewModel,
+                        soloFavoritos = false,
+                        alSeleccionarPrograma = { programa ->
+                            usuarioViewModel.seleccionarPrograma(programa)
+                            mainViewModel.navegarA(Screen.Detalle)
+                        }
+                    )
+                }
 
-            // pantalla 6: formulario para enviar una propuesta de ayuda
-            composable(Screen.Contacto.route) {
-                ContactScreen(
-                    viewModel = usuarioViewModel,
-                    alIrAResumen = { mainViewModel.navegarA(Screen.Resumen) },
-                    alAbrirMenu = abrirMenu,
-                    alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
-                )
-            }
+                composable(Screen.Favoritos.route) {
+                    CatalogScreen(
+                        estadoViewModel = estadoViewModel,
+                        soloFavoritos = true,
+                        alSeleccionarPrograma = { programa ->
+                            usuarioViewModel.seleccionarPrograma(programa)
+                            mainViewModel.navegarA(Screen.Detalle)
+                        }
+                    )
+                }
 
-            // pantalla 7: comprobante con el folio de la solicitud enviada
-            composable(Screen.Resumen.route) {
-                ResumenScreen(
-                    viewModel = usuarioViewModel,
-                    alIrAInicio = { mainViewModel.navegarA(Screen.Home) },
-                    alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alAbrirMenu = abrirMenu,
-                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
-                )
-            }
+                composable(
+                    route = Screen.Detalle.route,
+                    enterTransition = { entradaDetalle },
+                    popExitTransition = { salidaDetalle }
+                ) {
+                    DetalleScreen(
+                        usuarioViewModel = usuarioViewModel,
+                        estadoViewModel = estadoViewModel,
+                        alVolver = { mainViewModel.volverAtras() },
+                        alQuieroColaborar = { mainViewModel.navegarBottom(Screen.Contacto) }
+                    )
+                }
 
-            // pantalla 8: informacion de la fundacion corpaliv
-            composable(Screen.AcercaDe.route) {
-                AcercaDeScreen(
-                    alAbrirMenu = abrirMenu,
-                    alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
-                )
-            }
+                composable(Screen.Contacto.route) {
+                    ContactScreen(
+                        viewModel = usuarioViewModel,
+                        estadoViewModel = estadoViewModel,
+                        alIrAResumen = { mainViewModel.navegarA(Screen.Resumen) }
+                    )
+                }
 
-            // pantalla 9: perfil del usuario con su historial de solicitudes
-            composable(Screen.Perfil.route) {
-                PerfilScreen(
-                    usuarioViewModel = usuarioViewModel,
-                    estadoViewModel = estadoViewModel,
-                    alAbrirMenu = abrirMenu,
-                    alVerSolicitud = { mainViewModel.navegarA(Screen.Resumen) },
-                    alIrAFavoritos = { mainViewModel.navegarA(Screen.Favoritos) },
-                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) }
-                )
-            }
+                composable(
+                    route = Screen.Resumen.route,
+                    enterTransition = { entradaDetalle },
+                    popExitTransition = { salidaDetalle }
+                ) {
+                    ResumenScreen(
+                        viewModel = usuarioViewModel,
+                        alIrAInicio = { mainViewModel.navegarBottom(Screen.Home) },
+                        alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) }
+                    )
+                }
 
-            // pantalla 10: configuracion para activar alertas y cambiar tema visual
-            composable(Screen.Estado.route) {
-                EstadoScreen(
-                    alVolver = { mainViewModel.navegarA(Screen.Home) },
-                    alAbrirMenu = abrirMenu,
-                    alIrAPerfil = { mainViewModel.navegarA(Screen.Perfil) },
-                    alNavegarBottom = { destino -> mainViewModel.navegarBottom(destino) },
-                    viewModel = estadoViewModel
-                )
+                composable(Screen.AcercaDe.route) {
+                    AcercaDeScreen()
+                }
+
+                composable(Screen.Perfil.route) {
+                    PerfilScreen(
+                        usuarioViewModel = usuarioViewModel,
+                        estadoViewModel = estadoViewModel,
+                        alVerSolicitud = { mainViewModel.navegarA(Screen.Resumen) },
+                        alIrAFavoritos = { mainViewModel.navegarA(Screen.Favoritos) }
+                    )
+                }
+
+                composable(Screen.Estado.route) {
+                    EstadoScreen(
+                        alVolver = { mainViewModel.navegarBottom(Screen.Home) },
+                        viewModel = estadoViewModel
+                    )
+                }
             }
         }
     }

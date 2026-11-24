@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -79,12 +80,13 @@ fun AppCorpaliv_Grupo5Theme(
 
     val paletaActiva = if (esTemaOscuro) PaletaOscura else PaletaClara
 
-    // actualiza el color de los iconos del sistema solo cuando cambia el tema
+    // actualiza el color de la ventana y los iconos del sistema para evitar destellos blancos
     val view = LocalView.current
     if (!view.isInEditMode) {
         LaunchedEffect(esTemaOscuro) {
             val window = (view.context as? Activity)?.window
             if (window != null) {
+                window.decorView.setBackgroundColor(paletaActiva.fondo.toArgb())
                 val insetsController = WindowCompat.getInsetsController(window, view)
                 insetsController.isAppearanceLightStatusBars = !esTemaOscuro
                 insetsController.isAppearanceLightNavigationBars = !esTemaOscuro

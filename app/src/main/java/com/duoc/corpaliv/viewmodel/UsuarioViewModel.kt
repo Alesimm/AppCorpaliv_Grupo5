@@ -239,8 +239,8 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         return !hayErrores
     }
 
-    // guarda la solicitud en sqlite: si hay internet queda recibida y si no pendiente sin red
-    fun guardarEnSqlite(hayInternet: Boolean, onGuardado: () -> Unit = {}) {
+    // guarda la solicitud en sqlite y devuelve el folio generado para confirmar o notificar
+    fun guardarEnSqlite(hayInternet: Boolean, onGuardado: (String) -> Unit = {}) {
         val actual = _estado.value
         val fechaHoy = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
         val estadoInicial = if (hayInternet) "RECIBIDA" else "PENDIENTE SIN RED"
@@ -269,7 +269,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             // borra lo que habia en los campos del formulario para dejarlo limpio
             limpiarFormularioContacto()
 
-            onGuardado()
+            onGuardado(folioGenerado)
         }
     }
 

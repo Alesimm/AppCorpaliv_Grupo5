@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.screens
 
-// comprobante con el numero de folio de la solicitud enviada
-// muestra los datos guardados en la base de datos y si se envio o quedo pendiente
+// comprobante oficial con numero de folio, estado de envio y modal de edicion
+// usa el scaffold persistente de navegacion y las formas redondeadas unificadas
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,28 +9,25 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duoc.corpaliv.data.SolicitudEntity
-import com.duoc.corpaliv.navigation.Screen
-import com.duoc.corpaliv.ui.components.AppBottomBar
-import com.duoc.corpaliv.ui.components.AppTopBar
 import com.duoc.corpaliv.ui.components.BotonPrincipal
 import com.duoc.corpaliv.ui.components.BotonSecundario
 import com.duoc.corpaliv.ui.theme.AlbaBlack
@@ -38,87 +35,74 @@ import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaError
 import com.duoc.corpaliv.ui.theme.AlbaOrange
+import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.validation.validarMensaje
 import com.duoc.corpaliv.validation.validarRut
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// dibuja el comprobante oficial con su folio correlativo y estado de red
+private val OPCIONES_EDITAR_COLAB = listOf(
+    "Donación",
+    "Alianza empresarial",
+    "Voluntariado",
+    "Compra de productos",
+    "Capacitación"
+)
+
+// comprobante con folio correlativo, detalles de la solicitud y opcion de editar
 @Composable
 fun ResumenScreen(
     viewModel: UsuarioViewModel,
     alIrAInicio: () -> Unit,
-    alIrAPerfil: () -> Unit,
-    alAbrirMenu: () -> Unit,
-    alNavegarBottom: (Screen) -> Unit
+    alIrAPerfil: () -> Unit
 ) {
-    val solicitud by viewModel.solicitudSeleccionada.collectAsState()
+    val solicitud by viewModel.solicitudSeleccionada.collectAsStateWithLifecycle()
+    val item = solicitud
 
-    Scaffold(
-        topBar = {
-            AppTopBar(
-                titulo = "SOLICITUD",
-                alAbrirMenu = alAbrirMenu,
-                alIrAPerfil = alIrAPerfil
+    if (item == null) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AlbaBlack)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "No hay comprobante activo",
+                color = AlbaWhite,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
-        },
-        bottomBar = {
-            AppBottomBar(
-                rutaActual = "",
-                alNavegar = alNavegarBottom
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Puedes enviar una solicitud desde la pestaña Contacto o revisar el historial en Cuenta.",
+                color = AlbaTextSecondary,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
             )
-        },
-        containerColor = AlbaBlack
-    ) { innerPadding ->
-        val item = solicitud
-        if (item == null) {
-            Column(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "No hay comprobante activo",
-                    color = AlbaWhite,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Puedes enviar una solicitud desde la pestaña Contacto o revisar el historial en tu Perfil.",
-                    color = AlbaTextSecondary,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                BotonPrincipal(
-                    texto = "IR A INICIO",
-                    alHacerClick = alIrAInicio
-                )
-            }
-        } else {
-            ContenidoComprobante(
-                solicitud = item,
-                modifier = Modifier.padding(innerPadding),
-                alEditarSolicitud = { nuevaColab, nuevoRut, nuevoMsg ->
-                    viewModel.actualizarSolicitudExistente(item, nuevaColab, nuevoRut, nuevoMsg)
-                },
-                alIrAInicio = alIrAInicio,
-                alIrAPerfil = alIrAPerfil
+            Spacer(modifier = Modifier.height(24.dp))
+            BotonPrincipal(
+                texto = "IR A INICIO",
+                alHacerClick = alIrAInicio
             )
         }
+    } else {
+        ContenidoComprobante(
+            solicitud = item,
+            alEditarSolicitud = { nuevaColab, nuevoRut, nuevoMsg ->
+                viewModel.actualizarSolicitudExistente(item, nuevaColab, nuevoRut, nuevoMsg)
+            },
+            alIrAInicio = alIrAInicio,
+            alIrAPerfil = alIrAPerfil
+        )
     }
 }
 
-// diseno del comprobante con su tarjeta de folio y tabla de datos
 @Composable
 private fun ContenidoComprobante(
     solicitud: SolicitudEntity,
-    modifier: Modifier = Modifier,
     alEditarSolicitud: (String, String, String) -> Unit,
     alIrAInicio: () -> Unit,
     alIrAPerfil: () -> Unit
@@ -137,12 +121,12 @@ private fun ContenidoComprobante(
     }
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
+            .background(AlbaBlack)
             .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
-        // circulo naranja con un visto bueno que confirma el envio
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -177,19 +161,17 @@ private fun ContenidoComprobante(
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // tarjeta destacada con el numero de folio correlativo y el estado de envio
         Card(
-            shape = RoundedCornerShape(2.dp),
+            shape = AlbaShapes.tarjeta,
             colors = CardDefaults.cardColors(containerColor = AlbaCard),
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, AlbaOrange, RoundedCornerShape(2.dp))
-                .padding(bottom = 16.dp)
+                .border(1.dp, AlbaOrange, AlbaShapes.tarjeta)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 20.dp),
+                    .padding(horizontal = 18.dp, vertical = 20.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -209,11 +191,12 @@ private fun ContenidoComprobante(
                     )
                 }
 
-                // etiqueta que dice si la solicitud fue recibida o esta pendiente sin red
                 Box(
                     modifier = Modifier
-                        .border(1.dp, AlbaOrange, RoundedCornerShape(2.dp))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .clip(AlbaShapes.chip)
+                        .background(AlbaOrange.copy(alpha = 0.14f))
+                        .border(1.dp, AlbaOrange, AlbaShapes.chip)
+                        .padding(horizontal = 12.dp, vertical = 5.dp)
                 ) {
                     Text(
                         text = solicitud.estadoEnvio,
@@ -226,15 +209,16 @@ private fun ContenidoComprobante(
             }
         }
 
-        // lista con los datos ingresados como fecha, nombre, correo y mensaje
+        Spacer(modifier = Modifier.height(16.dp))
+
         Card(
-            shape = RoundedCornerShape(2.dp),
+            shape = AlbaShapes.tarjeta,
             colors = CardDefaults.cardColors(containerColor = AlbaCard),
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
+                .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
         ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp)) {
                 FilaComprobante(titulo = "Fecha", valor = solicitud.fecha)
                 HorizontalDivider(color = AlbaBorder)
                 FilaComprobante(titulo = "Colaboración", valor = solicitud.colaboracion)
@@ -255,7 +239,6 @@ private fun ContenidoComprobante(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // botones para editar, ir a ver todas las solicitudes o volver a inicio
         BotonSecundario(
             texto = "EDITAR SOLICITUD",
             alHacerClick = { mostrarDialogoEditar = true }
@@ -277,7 +260,6 @@ private fun ContenidoComprobante(
     }
 }
 
-// fila simple con el titulo a la izquierda y el valor a la derecha
 @Composable
 private fun FilaComprobante(titulo: String, valor: String) {
     Row(
@@ -304,20 +286,12 @@ private fun FilaComprobante(titulo: String, valor: String) {
     }
 }
 
-// ventana emergente para editar la colaboracion, rut y mensaje de una solicitud
 @Composable
 private fun DialogoEditarSolicitud(
     solicitud: SolicitudEntity,
     alCerrar: () -> Unit,
     alGuardar: (String, String, String) -> Unit
 ) {
-    val opcionesColaboracion = listOf(
-        "Donación",
-        "Alianza empresarial",
-        "Voluntariado",
-        "Compra de productos",
-        "Capacitación"
-    )
     var colaboracion by remember { mutableStateOf(solicitud.colaboracion) }
     var rutComercial by remember {
         mutableStateOf(if (solicitud.rutComercial == "No aplica") "" else solicitud.rutComercial)
@@ -331,6 +305,7 @@ private fun DialogoEditarSolicitud(
 
     AlertDialog(
         onDismissRequest = alCerrar,
+        shape = AlbaShapes.dialogo,
         containerColor = AlbaCard,
         titleContentColor = AlbaWhite,
         textContentColor = AlbaTextSecondary,
@@ -349,14 +324,14 @@ private fun DialogoEditarSolicitud(
                     fontWeight = FontWeight.Bold
                 )
 
-                // selector del tipo de colaboracion
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
-                            .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
-                            .background(AlbaBlack, RoundedCornerShape(2.dp))
+                            .clip(AlbaShapes.campo)
+                            .background(AlbaBlack)
+                            .border(1.dp, AlbaBorder, AlbaShapes.campo)
                             .clickable { menuAbierto = true }
                             .padding(horizontal = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -374,7 +349,7 @@ private fun DialogoEditarSolicitud(
                         onDismissRequest = { menuAbierto = false },
                         modifier = Modifier.background(AlbaCard)
                     ) {
-                        opcionesColaboracion.forEach { opcion ->
+                        OPCIONES_EDITAR_COLAB.forEach { opcion ->
                             DropdownMenuItem(
                                 text = { Text(text = opcion, color = AlbaWhite) },
                                 onClick = {
@@ -387,7 +362,6 @@ private fun DialogoEditarSolicitud(
                     }
                 }
 
-                // si es alianza empresarial se muestra el campo rut
                 if (colaboracion == "Alianza empresarial") {
                     OutlinedTextField(
                         value = rutComercial,
@@ -402,6 +376,7 @@ private fun DialogoEditarSolicitud(
                             errorRut?.let { Text(text = it, color = AlbaError) }
                         },
                         singleLine = true,
+                        shape = AlbaShapes.campo,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = AlbaBlack,
                             unfocusedContainerColor = AlbaBlack,
@@ -414,7 +389,6 @@ private fun DialogoEditarSolicitud(
                     )
                 }
 
-                // campo para editar el mensaje adicional
                 OutlinedTextField(
                     value = mensaje,
                     onValueChange = {
@@ -427,6 +401,7 @@ private fun DialogoEditarSolicitud(
                     supportingText = {
                         errorMensaje?.let { Text(text = it, color = AlbaError) }
                     },
+                    shape = AlbaShapes.campo,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = AlbaBlack,
                         unfocusedContainerColor = AlbaBlack,

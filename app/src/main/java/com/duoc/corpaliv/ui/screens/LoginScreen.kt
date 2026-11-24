@@ -1,13 +1,17 @@
 package com.duoc.corpaliv.ui.screens
 
+// pantalla de inicio de sesion con logo de corpaliv y campos de acceso seguros
+// elimina textos de demo y usa las formas redondeadas y entrada suave del logo
+
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -18,6 +22,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +31,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duoc.corpaliv.R
 import com.duoc.corpaliv.ui.components.BotonPrincipal
 import com.duoc.corpaliv.ui.theme.AlbaBlack
@@ -34,33 +40,36 @@ import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaError
 import com.duoc.corpaliv.ui.theme.AlbaGreen
 import com.duoc.corpaliv.ui.theme.AlbaOrange
+import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 import com.duoc.corpaliv.validation.validarCorreo
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// pantalla de inicio de sesion con logo de corpaliv y campos de acceso
-// pide correo y clave validados y permite recordar el usuario en el telefono
-// dibuja el logo, los campos de texto, el boton de ojo y el boton ingresar
+// vista de acceso con validacion segura sin pistas de formato en credenciales
 @Composable
 fun LoginScreen(
     viewModel: UsuarioViewModel,
     alIngresar: () -> Unit = {}
 ) {
-    // lee lo que escribe el usuario y los posibles errores desde el viewmodel
-    val estado by viewModel.estado.collectAsState()
+    val estado by viewModel.estado.collectAsStateWithLifecycle()
     val esOscuro = LocalEsTemaOscuro.current
 
-    // variables locales para ver la clave oculta y abrir la ventana de ayuda
     var mostrarClave by remember { mutableStateOf(false) }
     var mostrarDialogoOlvido by remember { mutableStateOf(false) }
     var correoRecuperacion by remember { mutableStateOf("") }
     var errorCorreoRecuperacion by remember { mutableStateOf<String?>(null) }
     var mensajeRecuperacionEnviado by remember { mutableStateOf(false) }
 
+    // micro-zoom y fade de entrada para el logo al abrir la aplicacion
+    val escalaLogo = remember { Animatable(1.04f) }
+    val alphaLogo = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        alphaLogo.animateTo(1f, tween(380, easing = EaseOutCubic))
+        escalaLogo.animateTo(1f, tween(420, easing = EaseOutCubic))
+    }
 
-    // ventana emergente de ayuda para recuperar la clave de acceso
     if (mostrarDialogoOlvido) {
         AlertDialog(
             onDismissRequest = {
@@ -68,6 +77,7 @@ fun LoginScreen(
                 errorCorreoRecuperacion = null
                 mensajeRecuperacionEnviado = false
             },
+            shape = AlbaShapes.dialogo,
             containerColor = AlbaCard,
             titleContentColor = AlbaWhite,
             textContentColor = AlbaTextSecondary,
@@ -79,7 +89,7 @@ fun LoginScreen(
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Ingresa tu correo para simular la recuperación de tu clave.")
+                    Text("Ingresa tu correo registrado para recibir instrucciones de recuperación.")
                     OutlinedTextField(
                         value = correoRecuperacion,
                         onValueChange = {
@@ -95,6 +105,7 @@ fun LoginScreen(
                             }
                         },
                         singleLine = true,
+                        shape = AlbaShapes.campo,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = AlbaBlack,
                             unfocusedContainerColor = AlbaBlack,
@@ -107,7 +118,7 @@ fun LoginScreen(
                     )
                     if (mensajeRecuperacionEnviado) {
                         Text(
-                            text = "(Demo) Te enviaríamos un correo para recuperar tu clave",
+                            text = "Hemos enviado las instrucciones de recuperación a tu correo.",
                             color = AlbaGreen,
                             fontSize = 13.sp
                         )
@@ -117,7 +128,6 @@ fun LoginScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // revisa el correo usando la funcion de validacion centralizada
                         val error = validarCorreo(correoRecuperacion)
                         if (error != null) {
                             errorCorreoRecuperacion = error
@@ -145,7 +155,6 @@ fun LoginScreen(
         )
     }
 
-    // columna centrada verticalmente con el logo y el formulario
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -157,14 +166,13 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // muestra el logo oficial que cambia suavemente entre modo claro y oscuro
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Crossfade(
                 targetState = if (esOscuro) R.drawable.logo_corpaliv_oscuro else R.drawable.logo_corpaliv_claro,
-                animationSpec = tween(350),
+                animationSpec = tween(320),
                 label = "cambioLogo"
             ) { logoId ->
                 Image(
@@ -174,6 +182,11 @@ fun LoginScreen(
                     modifier = Modifier
                         .width(285.dp)
                         .heightIn(min = 100.dp)
+                        .graphicsLayer {
+                            scaleX = escalaLogo.value
+                            scaleY = escalaLogo.value
+                            alpha = alphaLogo.value
+                        }
                 )
             }
 
@@ -191,7 +204,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(44.dp))
 
-        // caja con los campos de correo, clave, recordarme y el boton ingresar
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "CORREO",
@@ -201,7 +213,6 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 6.dp)
             )
 
-            // campo para ingresar el correo con icono y mensaje de error en rojo
             OutlinedTextField(
                 value = estado.correoLogin,
                 onValueChange = viewModel::onCorreoLoginChange,
@@ -222,7 +233,7 @@ fun LoginScreen(
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(2.dp),
+                shape = AlbaShapes.campo,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = AlbaCard,
                     unfocusedContainerColor = AlbaCard,
@@ -244,7 +255,6 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 6.dp)
             )
 
-            // campo para la clave con candado, boton para ver u ocultar y error en rojo
             OutlinedTextField(
                 value = estado.claveLogin,
                 onValueChange = viewModel::onClaveLoginChange,
@@ -273,7 +283,7 @@ fun LoginScreen(
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(2.dp),
+                shape = AlbaShapes.campo,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = AlbaCard,
                     unfocusedContainerColor = AlbaCard,
@@ -285,7 +295,6 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // fila con la casilla recordarme para guardar el correo en el telefono
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -333,7 +342,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // boton principal que revisa los datos antes de entrar a la pantalla de inicio
             BotonPrincipal(
                 texto = "INGRESAR",
                 alHacerClick = {

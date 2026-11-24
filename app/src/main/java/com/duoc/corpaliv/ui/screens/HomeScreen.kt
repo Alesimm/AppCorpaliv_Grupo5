@@ -1,13 +1,15 @@
 package com.duoc.corpaliv.ui.screens
 
+// pantalla principal con saludo al usuario, carrusel paginado con pill dots y accesos rapidos
+// usa la sesion desacoplada y el tamano de pantalla global para evitar recomposiciones extra
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
@@ -15,80 +17,63 @@ import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duoc.corpaliv.model.ProgramaSocial
 import com.duoc.corpaliv.model.listaProgramasAlbaLab
-import com.duoc.corpaliv.navigation.Screen
-import com.duoc.corpaliv.ui.components.AppBottomBar
-import com.duoc.corpaliv.ui.components.AppTopBar
 import com.duoc.corpaliv.ui.components.EtiquetaCategoriaPrograma
 import com.duoc.corpaliv.ui.components.IlustracionPrograma
+import com.duoc.corpaliv.ui.components.PillDotsIndicator
+import com.duoc.corpaliv.ui.components.colorDelPrograma
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaOrange
+import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
-import com.duoc.corpaliv.ui.utils.obtenerWindowSizeClass
+import com.duoc.corpaliv.ui.utils.LocalWindowWidthSizeClass
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// pantalla principal con saludo al usuario, carrusel de programas y opciones de ayuda
-// al tocar un programa abre su detalle y al tocar una opcion de ayuda abre el formulario
-
-// vista principal que se adapta al tamano de la pantalla ya sea celular o tablet
+// vista principal responsiva con carrusel HorizontalPager y Pill Dots en tiempo real
 @Composable
 fun HomeScreen(
     usuarioViewModel: UsuarioViewModel,
-    alAbrirMenu: () -> Unit,
-    alIrAPerfil: () -> Unit,
     alSeleccionarPrograma: (ProgramaSocial) -> Unit,
-    alSeleccionarColaboracion: (String) -> Unit,
-    alNavegarBottom: (Screen) -> Unit
+    alSeleccionarColaboracion: (String) -> Unit
 ) {
-    val estado by usuarioViewModel.estado.collectAsState()
-    val windowSizeClass = obtenerWindowSizeClass()
+    val sesion by usuarioViewModel.sesionActiva.collectAsStateWithLifecycle()
+    val widthSizeClass = LocalWindowWidthSizeClass.current
 
-    // ajusta el ancho de los margenes para que se vea bien en celulares chicos y tablets
-    val margenLateral = when (windowSizeClass.widthSizeClass) {
+    val margenLateral = when (widthSizeClass) {
         WindowWidthSizeClass.Compact -> 20.dp
         WindowWidthSizeClass.Medium -> 48.dp
         WindowWidthSizeClass.Expanded -> 96.dp
         else -> 20.dp
     }
 
-    Scaffold(
-        topBar = {
-            AppTopBar(
-                titulo = "",
-                alAbrirMenu = alAbrirMenu,
-                alIrAPerfil = alIrAPerfil
-            )
-        },
-        bottomBar = {
-            AppBottomBar(
-                rutaActual = Screen.Home.route,
-                alNavegar = alNavegarBottom
-            )
-        },
-        containerColor = AlbaBlack
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = margenLateral, vertical = 20.dp)
-        ) {
+    val pagerState = rememberPagerState(pageCount = { listaProgramasAlbaLab.size })
+    val programaVisible = listaProgramasAlbaLab[pagerState.currentPage]
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AlbaBlack)
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 20.dp)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = margenLateral)) {
             Text(
                 text = "BIENVENIDO",
                 color = AlbaTextSecondary,
@@ -98,7 +83,7 @@ fun HomeScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Hola, ${estado.nombreUsuarioActivo}",
+                text = "Hola, ${sesion.nombre}",
                 color = AlbaWhite,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Black
@@ -112,24 +97,43 @@ fun HomeScreen(
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
+        }
 
-            Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-            // carrusel horizontal para deslizar y ver las tarjetas de los programas
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(listaProgramasAlbaLab) { programa ->
-                    TarjetaProgramaDestacado(
-                        programa = programa,
-                        alHacerClick = { alSeleccionarPrograma(programa) }
-                    )
-                }
-            }
+        // carrusel deslizable con vista previa de la tarjeta siguiente
+        HorizontalPager(
+            state = pagerState,
+            key = { listaProgramasAlbaLab[it].id },
+            contentPadding = PaddingValues(start = margenLateral, end = margenLateral + 56.dp),
+            pageSpacing = 14.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) { indice ->
+            val programa = listaProgramasAlbaLab[indice]
+            TarjetaProgramaDestacado(
+                programa = programa,
+                alHacerClick = { alSeleccionarPrograma(programa) }
+            )
+        }
 
-            Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
+        // puntos indicadores que se estiran en pildora al deslizar con el dedo
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            PillDotsIndicator(
+                cantidad = listaProgramasAlbaLab.size,
+                paginaActual = pagerState.currentPage,
+                fraccionDesplazamiento = pagerState.currentPageOffsetFraction,
+                colorActivo = colorDelPrograma(programaVisible.id)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(26.dp))
+
+        Column(modifier = Modifier.padding(horizontal = margenLateral)) {
             Text(
                 text = "Cómo puedes colaborar",
                 color = AlbaWhite,
@@ -139,7 +143,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // botones de acceso rapido para elegir como colaborar: donacion, alianza, etc
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -190,7 +193,7 @@ fun HomeScreen(
     }
 }
 
-// tarjeta individual del carrusel con la curva del logo y el titulo del programa
+// tarjeta destacada del carrusel con esquinas suaves e ilustracion en cache
 @Composable
 private fun TarjetaProgramaDestacado(
     programa: ProgramaSocial,
@@ -198,13 +201,13 @@ private fun TarjetaProgramaDestacado(
 ) {
     Box(
         modifier = Modifier
-            .width(230.dp)
+            .fillMaxWidth()
             .height(210.dp)
-            .background(AlbaCard, RoundedCornerShape(2.dp))
-            .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
+            .clip(AlbaShapes.tarjeta)
+            .background(AlbaCard)
+            .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
             .clickable { alHacerClick() }
     ) {
-        // ilustracion vectorial de las sonrisas del logo en los 150 dp superiores con compensacion para la etiqueta
         IlustracionPrograma(
             idPrograma = programa.id,
             modifier = Modifier
@@ -215,7 +218,6 @@ private fun TarjetaProgramaDestacado(
             desplazamientoY = 8.dp
         )
 
-        // etiqueta de categoria en la esquina superior izquierda
         EtiquetaCategoriaPrograma(
             idPrograma = programa.id,
             categoria = programa.categoria,
@@ -224,7 +226,6 @@ private fun TarjetaProgramaDestacado(
                 .padding(14.dp)
         )
 
-        // titulo del programa en la parte inferior izquierda
         Text(
             text = programa.titulo,
             color = AlbaWhite,
@@ -232,12 +233,12 @@ private fun TarjetaProgramaDestacado(
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(14.dp)
+                .padding(16.dp)
         )
     }
 }
 
-// boton con icono naranja que al tocarlo preselecciona la forma de ayuda en el formulario
+// acceso rapido de colaboracion con borde redondeado unificado
 @Composable
 private fun BotonOpcionColaborar(
     titulo: String,
@@ -248,8 +249,9 @@ private fun BotonOpcionColaborar(
     Row(
         modifier = modifier
             .height(68.dp)
-            .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
-            .background(AlbaCard, RoundedCornerShape(2.dp))
+            .clip(AlbaShapes.boton)
+            .background(AlbaCard)
+            .border(1.dp, AlbaBorder, AlbaShapes.boton)
             .clickable { alHacerClick() }
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically

@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.components
 
-// micro-interacciones y componentes animados reutilizables con la paleta corpaliv
-// incluye liquid toggle, heart burst, pill dots, bouncing dots y skeleton pulse
+// micro-interacciones fieles a los videos de referencia adaptadas a la paleta corpaliv
+// incluye liquid toggle, heart burst con mini corazones, pill dots reactivos, bouncing dots y skeleton
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -10,7 +10,6 @@ import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -49,10 +48,14 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaOrange
@@ -61,18 +64,19 @@ import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
-// interruptor elastico tipo gota liquida que se estira al deslizarse y rebota al llegar
+// interruptor elastico tipo gota liquida: se estira al deslizarse y se comprime al llegar al borde
 @Composable
 fun LiquidToggle(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     colorActivo: Color = AlbaOrange,
-    ancho: Dp = 54.dp,
-    alto: Dp = 30.dp
+    ancho: Dp = 52.dp,
+    alto: Dp = 28.dp
 ) {
     val esOscuro = LocalEsTemaOscuro.current
     val progreso = remember { Animatable(if (checked) 1f else 0f) }
@@ -81,13 +85,13 @@ fun LiquidToggle(
         progreso.animateTo(
             targetValue = if (checked) 1f else 0f,
             animationSpec = spring(
-                dampingRatio = 0.62f,
-                stiffness = 380f
+                dampingRatio = 0.58f,
+                stiffness = 360f
             )
         )
     }
 
-    val colorPistaInactiva = if (esOscuro) Color(0xFF2B2B2B) else Color(0xFFDAD5CB)
+    val colorPistaInactiva = if (esOscuro) Color(0xFF2B2B2B) else Color(0xFFD9D4CA)
     val colorPista by animateColorAsState(
         targetValue = if (checked) colorActivo else colorPistaInactiva,
         animationSpec = tween(durationMillis = 240),
@@ -110,30 +114,32 @@ fun LiquidToggle(
         val margen = 3.dp.toPx()
         val diametroBase = size.height - (margen * 2f)
 
-        // dibuja la pista redondeada de fondo
+        // pista redondeada con ligero brillo interior cuando esta encendida
         drawRoundRect(
             color = colorPista,
             cornerRadius = CornerRadius(radioPista, radioPista)
         )
 
-        // la perilla se estira en horizontal a mitad de camino y se compacta al llegar al borde
-        val factorEstiramiento = sin(t * PI).toFloat().coerceAtLeast(0f)
-        val anchoPerilla = diametroBase + (diametroBase * 0.34f * factorEstiramiento)
-        val altoPerilla = diametroBase - (diametroBase * 0.08f * factorEstiramiento)
+        // efecto gota: se estira al medio del recorrido y hace ligero squish al chocar con el borde
+        val estiramientoMedio = sin(t * PI).toFloat().coerceAtLeast(0f)
+        val squishBorde = (abs(progreso.value - t) * 2.2f).coerceIn(0f, 0.16f)
 
-        val recorridoDisponible = (size.width - (margen * 2f) - anchoPerilla).coerceAtLeast(0f)
-        val posX = margen + (recorridoDisponible * t)
+        val anchoPerilla = diametroBase * (1f + 0.38f * estiramientoMedio - squishBorde)
+        val altoPerilla = diametroBase * (1f - 0.10f * estiramientoMedio + squishBorde * 0.7f)
+
+        val recorrido = (size.width - (margen * 2f) - anchoPerilla).coerceAtLeast(0f)
+        val posX = margen + (recorrido * t)
         val posY = (size.height - altoPerilla) / 2f
 
-        // sombra sutil debajo de la perilla para dar profundidad
+        // sombra suave bajo la perilla
         drawRoundRect(
-            color = Color.Black.copy(alpha = 0.16f),
-            topLeft = Offset(posX, posY + 1.5.dp.toPx()),
+            color = Color.Black.copy(alpha = 0.18f),
+            topLeft = Offset(posX, posY + 1.2.dp.toPx()),
             size = Size(anchoPerilla, altoPerilla),
             cornerRadius = CornerRadius(altoPerilla / 2f, altoPerilla / 2f)
         )
 
-        // perilla principal blanca
+        // perilla blanca elastica
         drawRoundRect(
             color = Color.White,
             topLeft = Offset(posX, posY),
@@ -143,7 +149,28 @@ fun LiquidToggle(
     }
 }
 
-// boton de corazon con explosion de anillo y particulas al marcar favorito
+// dibuja un mini corazon vectorial centrado en el origen para la explosion de favoritos
+private fun DrawScope.dibujarMiniCorazon(
+    path: Path,
+    centro: Offset,
+    tamano: Float,
+    color: Color
+) {
+    path.reset()
+    val s = tamano / 2f
+    path.moveTo(0f, s * 0.65f)
+    path.cubicTo(-s * 1.1f, -s * 0.15f, -s * 0.65f, -s * 1.05f, 0f, -s * 0.35f)
+    path.cubicTo(s * 0.65f, -s * 1.05f, s * 1.1f, -s * 0.15f, 0f, s * 0.65f)
+    path.close()
+
+    withTransform({
+        translate(left = centro.x, top = centro.y)
+    }) {
+        drawPath(path = path, color = color)
+    }
+}
+
+// boton de corazon fiel al video: rebota relleno con anillo expansivo y mini corazones
 @Composable
 fun BotonFavoritoBurst(
     esFavorito: Boolean,
@@ -153,25 +180,25 @@ fun BotonFavoritoBurst(
 ) {
     val escalaCorazon = remember { Animatable(1f) }
     val progresoBurst = remember { Animatable(1f) }
+    val miniCorazonPath = remember { Path() }
     var animacionActiva by remember { mutableStateOf(false) }
     var estadoPrevio by remember { mutableStateOf(esFavorito) }
 
-    // dispara la explosion solo cuando el usuario pasa de no-favorito a favorito
     LaunchedEffect(esFavorito) {
         if (esFavorito && !estadoPrevio) {
             animacionActiva = true
             progresoBurst.snapTo(0f)
-            escalaCorazon.snapTo(0.65f)
+            escalaCorazon.snapTo(0.55f)
             escalaCorazon.animateTo(
                 targetValue = 1f,
                 animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    dampingRatio = 0.45f,
                     stiffness = Spring.StiffnessMedium
                 )
             )
             progresoBurst.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = 420, easing = EaseOutCubic)
+                animationSpec = tween(durationMillis = 480, easing = EaseOutCubic)
             )
             animacionActiva = false
         }
@@ -188,42 +215,44 @@ fun BotonFavoritoBurst(
 
     Box(
         modifier = modifier
-            .size(44.dp)
+            .size(48.dp)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null
             ) { alAlternar() },
         contentAlignment = Alignment.Center
     ) {
-        // anillo expansivo y 8 chispas en colores corpaliv que explotan hacia afuera
+        // anillo y 6 mini corazones saliendo hacia afuera en naranja y morado corpaliv
         if (animacionActiva && progresoBurst.value < 1f) {
-            Canvas(modifier = Modifier.size(44.dp)) {
+            Canvas(modifier = Modifier.size(48.dp)) {
                 val p = progresoBurst.value
                 val alpha = (1f - p).coerceIn(0f, 1f)
                 val centro = Offset(size.width / 2f, size.height / 2f)
                 val radioMaximo = size.minDimension * 0.48f
 
-                // anillo de onda expansiva
+                // anillo circular que se expande y se desvanece
                 drawCircle(
-                    color = AlbaOrange.copy(alpha = alpha * 0.55f),
-                    radius = radioMaximo * (0.35f + 0.65f * p),
+                    color = AlbaOrange.copy(alpha = alpha * 0.65f),
+                    radius = radioMaximo * (0.30f + 0.70f * p),
                     center = centro,
-                    style = Stroke(width = (2.5.dp.toPx() * alpha).coerceAtLeast(0.5f))
+                    style = Stroke(width = (2.4.dp.toPx() * alpha).coerceAtLeast(0.5f))
                 )
 
-                // particulas alternadas naranja y morado
-                val cantidad = 8
+                // mini corazones explotando en 6 direcciones
+                val cantidad = 6
                 for (i in 0 until cantidad) {
-                    val angulo = (i * (360.0 / cantidad)) * (PI / 180.0)
-                    val distancia = radioMaximo * (0.4f + 0.65f * p)
+                    val angulo = ((i * 60.0) - 30.0) * (PI / 180.0)
+                    val distancia = radioMaximo * (0.38f + 0.65f * p)
                     val px = centro.x + (cos(angulo) * distancia).toFloat()
                     val py = centro.y + (sin(angulo) * distancia).toFloat()
-                    val colorParticula = if (i % 2 == 0) AlbaOrange else AlbaPurple
-                    val radioParticula = (3.2.dp.toPx() * alpha).coerceAtLeast(0.5f)
-                    drawCircle(
-                        color = colorParticula.copy(alpha = alpha),
-                        radius = radioParticula,
-                        center = Offset(px, py)
+                    val colorMini = if (i % 2 == 0) AlbaOrange else AlbaPurple
+                    val tamanoMini = (8.dp.toPx() * (0.55f + 0.45f * (1f - p))).coerceAtLeast(2f)
+
+                    dibujarMiniCorazon(
+                        path = miniCorazonPath,
+                        centro = Offset(px, py),
+                        tamano = tamanoMini,
+                        color = colorMini.copy(alpha = alpha)
                     )
                 }
             }
@@ -243,16 +272,18 @@ fun BotonFavoritoBurst(
     }
 }
 
-// indicador de paginas donde el punto activo se estira suavemente en forma de pildora
+// indicador de paginas fiel al video: el punto activo se estira en pildora en tiempo real al deslizar
 @Composable
 fun PillDotsIndicator(
     cantidad: Int,
     paginaActual: Int,
+    fraccionDesplazamiento: Float = 0f,
     colorActivo: Color = AlbaOrange,
     modifier: Modifier = Modifier
 ) {
     val esOscuro = LocalEsTemaOscuro.current
     val colorInactivo = if (esOscuro) Color(0xFF3A3A3A) else Color(0xFFCFCAC0)
+    val posicionContinua = (paginaActual + fraccionDesplazamiento).coerceIn(0f, (cantidad - 1).coerceAtLeast(0).toFloat())
 
     Row(
         modifier = modifier,
@@ -260,20 +291,10 @@ fun PillDotsIndicator(
         verticalAlignment = Alignment.CenterVertically
     ) {
         for (i in 0 until cantidad) {
-            val activo = i == paginaActual
-            val anchoPunto by animateDpAsState(
-                targetValue = if (activo) 26.dp else 8.dp,
-                animationSpec = spring(
-                    dampingRatio = 0.72f,
-                    stiffness = 400f
-                ),
-                label = "anchoPillDot"
-            )
-            val colorPunto by animateColorAsState(
-                targetValue = if (activo) colorActivo else colorInactivo,
-                animationSpec = tween(durationMillis = 240),
-                label = "colorPillDot"
-            )
+            val distancia = abs(posicionContinua - i).coerceIn(0f, 1f)
+            val seleccion = 1f - distancia
+            val anchoPunto = lerp(8.dp, 28.dp, seleccion)
+            val colorPunto = androidx.compose.ui.graphics.lerp(colorInactivo, colorActivo, seleccion)
 
             Box(
                 modifier = Modifier
@@ -286,7 +307,7 @@ fun PillDotsIndicator(
     }
 }
 
-// indicador de carga con tres puntos rebotando en ola y ligera compresion al caer
+// 3 puntos rebotando en ola (0.14s de desfase, ciclo 0.9s) con squash suave al aterrizar
 @Composable
 fun BouncingDotsLoader(
     modifier: Modifier = Modifier,
@@ -310,15 +331,13 @@ fun BouncingDotsLoader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         for (i in 0 until 3) {
-            // desfasa cada punto en 0.16 del ciclo (~140ms)
-            val faseLocal = (fase - (i * 0.16f) + 1f) % 1f
+            val faseLocal = (fase - (i * 0.155f) + 1f) % 1f
             val salto = if (faseLocal < 0.5f) {
                 sin((faseLocal / 0.5f) * PI).toFloat()
             } else {
                 0f
             }
-            // ligero squash al aterrizar
-            val compresion = if (faseLocal in 0.48f..0.62f) 0.14f else 0f
+            val compresion = if (faseLocal in 0.48f..0.62f) 0.15f else 0f
 
             Box(
                 modifier = Modifier
@@ -335,7 +354,7 @@ fun BouncingDotsLoader(
     }
 }
 
-// tarjeta placeholder con pulso suave cada 1.6s lista para cargas de red y listas
+// tarjeta skeleton que pulsa suavemente cada 1.6s para cargas de red y listas
 @Composable
 fun SkeletonCardPulse(
     modifier: Modifier = Modifier
@@ -364,7 +383,6 @@ fun SkeletonCardPulse(
             .graphicsLayer { alpha = opacidad },
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // bloque superior simulando imagen o encabezado
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -372,7 +390,6 @@ fun SkeletonCardPulse(
                 .clip(AlbaShapes.boton)
                 .background(base)
         )
-        // tres lineas de texto simuladas
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.65f)
