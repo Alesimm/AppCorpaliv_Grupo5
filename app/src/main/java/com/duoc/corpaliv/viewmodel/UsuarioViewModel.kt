@@ -23,6 +23,7 @@ import com.duoc.corpaliv.validation.validarCredencialesLogin
 import com.duoc.corpaliv.validation.validarMensaje
 import com.duoc.corpaliv.validation.validarNombre
 import com.duoc.corpaliv.validation.validarRut
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -52,6 +53,10 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
 
     private val _solicitudSeleccionada = MutableStateFlow<SolicitudEntity?>(null)
     val solicitudSeleccionada: StateFlow<SolicitudEntity?> = _solicitudSeleccionada
+
+    // activa el skeleton breve solo al emitir una nueva solicitud para una transicion mas natural
+    private val _cargandoComprobante = MutableStateFlow(false)
+    val cargandoComprobante: StateFlow<Boolean> = _cargandoComprobante
 
     val listaSolicitudes: StateFlow<List<SolicitudEntity>> = solicitudDao.obtenerSolicitudes()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -163,8 +168,9 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // guarda la solicitud elegida en el perfil para abrir su comprobante
+    // guarda la solicitud elegida en el perfil para abrir su comprobante de inmediato
     fun verDetalleSolicitud(solicitud: SolicitudEntity) {
+        _cargandoComprobante.value = false
         _solicitudSeleccionada.value = solicitud
     }
 
@@ -259,6 +265,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         )
 
         viewModelScope.launch {
+            _cargandoComprobante.value = true
             // guarda en la base de datos y arma un folio correlativo unico como al-2026-0001
             val nuevoId = solicitudDao.insertarSolicitud(solicitudInicial)
             val folioGenerado = String.format(Locale.getDefault(), "AL-2026-%04d", nuevoId)
@@ -270,6 +277,10 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             limpiarFormularioContacto()
 
             onGuardado(folioGenerado)
+
+            // muestra el skeleton del comprobante brevemente antes de revelar la tarjeta final
+            delay(750)
+            _cargandoComprobante.value = false
         }
     }
 

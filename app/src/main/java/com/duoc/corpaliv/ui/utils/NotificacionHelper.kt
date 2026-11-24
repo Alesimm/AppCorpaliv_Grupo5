@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.utils
 
-// utilidad nativa para emitir notificaciones locales reales en android
-// se activa con el modo colaborador para avisar confirmaciones de solicitudes y alertas
+// utilidad nativa para emitir notificaciones locales visibles (heads-up) en android
+// usa canal IMPORTANCE_HIGH e icono vectorial monocromatico de 24dp compatible con android 7 a 16
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -11,6 +11,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -19,26 +20,28 @@ import com.duoc.corpaliv.R
 
 object NotificacionHelper {
 
-    private const val CANAL_ID = "corpaliv_colaborador"
+    // nuevo id de canal con importancia alta para que android muestre el banner emergente en pantalla
+    private const val CANAL_ID = "corpaliv_alertas_v2"
     private const val CANAL_NOMBRE = "Alertas CORPALIV"
-    private const val CANAL_DESCRIPCION = "Notificaciones de modo colaborador y confirmación de solicitudes."
+    private const val CANAL_DESCRIPCION = "Avisos del modo colaborador y confirmaciones de solicitudes."
 
-    // crea el canal obligatorio desde android 8 para mostrar avisos en la barra de estado
+    // registra el canal de alta prioridad desde android 8
     fun asegurarCanal(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val canal = NotificationChannel(
                 CANAL_ID,
                 CANAL_NOMBRE,
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = CANAL_DESCRIPCION
+                enableVibration(true)
             }
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(canal)
         }
     }
 
-    // verifica si el sistema autorizo mostrar notificaciones (requerido en android 13+)
+    // verifica el permiso POST_NOTIFICATIONS en android 13+
     fun tienePermiso(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
@@ -50,14 +53,38 @@ object NotificacionHelper {
         }
     }
 
-    // dispara una notificacion local real que al tocarla abre la aplicacion
+    // revisa tanto el permiso como el interruptor general de notificaciones del sistema
+    fun estaHabilitadoEnSistema(context: Context): Boolean {
+        return tienePermiso(context) && NotificationManagerCompat.from(context).areNotificationsEnabled()
+    }
+
+    // abre directamente la pantalla de notificaciones de esta app en ajustes de android
+    fun abrirAjustesNotificaciones(context: Context) {
+        val intent = Intent().apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                action = Settings.ACTION_APP_NOTIFICATION_SETTINGS
+                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            } else {
+                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                data = android.net.Uri.parse("package:${context.packageName}")
+            }
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        try {
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            // evita cierres si el dispositivo no soporta el intent directo
+        }
+    }
+
+    // dispara una notificacion emergente real y devuelve true si se envio correctamente
     fun enviarNotificacion(
         context: Context,
         titulo: String,
         mensaje: String,
-        id: Int = (System.currentTimeMillis() % 10000).toInt()
-    ) {
-        if (!tienePermiso(context)) return
+        id: Int = (System.currentTimeMillis() % 100000).toInt()
+    ): Boolean {
+        if (!estaHabilitadoEnSistema(context)) return false
 
         asegurarCanal(context)
 
@@ -72,19 +99,22 @@ object NotificacionHelper {
         )
 
         val notificacion = NotificationCompat.Builder(context, CANAL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notificacion_corpaliv)
             .setContentTitle(titulo)
             .setContentText(mensaje)
             .setStyle(NotificationCompat.BigTextStyle().bigText(mensaje))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
 
-        try {
+        return try {
             NotificationManagerCompat.from(context).notify(id, notificacion)
+            true
         } catch (_: SecurityException) {
-            // si el usuario revoco el permiso desde ajustes del telefono evitamos cierres
+            false
         }
     }
 }

@@ -1,32 +1,37 @@
 package com.duoc.corpaliv.ui.screens
 
 // pantalla del formulario para enviar una propuesta de ayuda o alianza
-// guarda la solicitud en sqlite y dispara notificacion local si el modo colaborador esta activo
+// usa selectores ModalBottomSheet modernos con iconos y dispara notificacion real al enviar
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duoc.corpaliv.model.listaProgramasAlbaLab
+import com.duoc.corpaliv.ui.components.OpcionSelector
+import com.duoc.corpaliv.ui.components.SelectorBottomSheetAlba
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
@@ -39,17 +44,25 @@ import com.duoc.corpaliv.ui.utils.hayConexionInternet
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// listas fijas fuera del composable para no recrearlas al escribir en el formulario
+// opciones fijas con iconos fuera del composable para no recrearlas al escribir
 private val OPCIONES_COLABORACION = listOf(
-    "Donación",
-    "Alianza empresarial",
-    "Voluntariado",
-    "Compra de productos",
-    "Capacitación"
+    OpcionSelector("Donación", Icons.Default.CardGiftcard),
+    OpcionSelector("Alianza empresarial", Icons.Default.Business),
+    OpcionSelector("Voluntariado", Icons.Default.Groups),
+    OpcionSelector("Compra de productos", Icons.Default.ShoppingBag),
+    OpcionSelector("Capacitación", Icons.Default.School)
 )
-private val OPCIONES_PROGRAMAS = listaProgramasAlbaLab.map { it.titulo }
 
-// formulario de contacto con validacion y confirmacion por notificacion local
+private val OPCIONES_PROGRAMAS = listaProgramasAlbaLab.map { programa ->
+    val icono = when (programa.id) {
+        "taller_oficios" -> Icons.Default.Build
+        "insercion_laboral" -> Icons.Default.Work
+        else -> Icons.Default.AutoAwesome
+    }
+    OpcionSelector(programa.titulo, icono)
+}
+
+// formulario de contacto con selectores BottomSheet y notificacion heads-up al guardar
 @Composable
 fun ContactScreen(
     viewModel: UsuarioViewModel,
@@ -59,9 +72,6 @@ fun ContactScreen(
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val modoColaboradorActivo by estadoViewModel.activo.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
-    var menuAyudaAbierto by remember { mutableStateOf(false) }
-    var menuProgramaAbierto by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -158,51 +168,14 @@ fun ContactScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         EtiquetaCampo("¿CÓMO QUIERES AYUDAR?")
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-                    .clip(AlbaShapes.campo)
-                    .background(AlbaCard)
-                    .border(
-                        1.dp,
-                        if (estado.errores.colaboracion != null) AlbaError else AlbaBorder,
-                        AlbaShapes.campo
-                    )
-                    .clickable { menuAyudaAbierto = true }
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = estado.colaboracion.ifBlank { "Selecciona una opción" },
-                    color = if (estado.colaboracion.isBlank()) AlbaTextSecondary else AlbaWhite,
-                    fontSize = 15.sp
-                )
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = AlbaTextSecondary
-                )
-            }
-
-            DropdownMenu(
-                expanded = menuAyudaAbierto,
-                onDismissRequest = { menuAyudaAbierto = false },
-                modifier = Modifier.background(AlbaCard)
-            ) {
-                OPCIONES_COLABORACION.forEach { opcion ->
-                    DropdownMenuItem(
-                        text = { Text(text = opcion, color = AlbaWhite) },
-                        onClick = {
-                            viewModel.onColaboracionChange(opcion)
-                            menuAyudaAbierto = false
-                        }
-                    )
-                }
-            }
-        }
+        SelectorBottomSheetAlba(
+            tituloSheet = "¿Cómo quieres ayudar?",
+            valorActual = estado.colaboracion,
+            placeholder = "Selecciona una opción",
+            opciones = OPCIONES_COLABORACION,
+            alSeleccionar = viewModel::onColaboracionChange,
+            esError = estado.errores.colaboracion != null
+        )
         estado.errores.colaboracion?.let {
             Text(
                 text = it,
@@ -241,47 +214,13 @@ fun ContactScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         EtiquetaCampo("PROGRAMA")
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-                    .clip(AlbaShapes.campo)
-                    .background(AlbaCard)
-                    .border(1.dp, AlbaBorder, AlbaShapes.campo)
-                    .clickable { menuProgramaAbierto = true }
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = estado.programa.ifBlank { OPCIONES_PROGRAMAS.first() },
-                    color = AlbaWhite,
-                    fontSize = 15.sp
-                )
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = AlbaTextSecondary
-                )
-            }
-
-            DropdownMenu(
-                expanded = menuProgramaAbierto,
-                onDismissRequest = { menuProgramaAbierto = false },
-                modifier = Modifier.background(AlbaCard)
-            ) {
-                OPCIONES_PROGRAMAS.forEach { prog ->
-                    DropdownMenuItem(
-                        text = { Text(text = prog, color = AlbaWhite) },
-                        onClick = {
-                            viewModel.onProgramaFormChange(prog)
-                            menuProgramaAbierto = false
-                        }
-                    )
-                }
-            }
-        }
+        SelectorBottomSheetAlba(
+            tituloSheet = "Selecciona un programa",
+            valorActual = estado.programa.ifBlank { OPCIONES_PROGRAMAS.first().texto },
+            placeholder = OPCIONES_PROGRAMAS.first().texto,
+            opciones = OPCIONES_PROGRAMAS,
+            alSeleccionar = viewModel::onProgramaFormChange
+        )
 
         Spacer(modifier = Modifier.height(14.dp))
 
@@ -307,7 +246,6 @@ fun ContactScreen(
                 if (viewModel.validarFormulario()) {
                     val conectado = hayConexionInternet(context)
                     viewModel.guardarEnSqlite(conectado) { folio ->
-                        // si el usuario activo alertas en configuracion enviamos notificacion local real
                         if (modoColaboradorActivo == true) {
                             NotificacionHelper.enviarNotificacion(
                                 context = context,

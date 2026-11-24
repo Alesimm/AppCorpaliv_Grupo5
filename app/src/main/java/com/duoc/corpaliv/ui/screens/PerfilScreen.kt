@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duoc.corpaliv.data.SolicitudEntity
 import com.duoc.corpaliv.ui.components.AvatarColaborador
+import com.duoc.corpaliv.ui.components.DialogoAnimadoAlba
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
@@ -57,22 +58,29 @@ fun PerfilScreen(
     var solicitudAEliminar by remember { mutableStateOf<SolicitudEntity?>(null) }
 
     solicitudAEliminar?.let { solicitud ->
-        AlertDialog(
-            onDismissRequest = { solicitudAEliminar = null },
-            shape = AlbaShapes.dialogo,
-            containerColor = AlbaCard,
-            titleContentColor = AlbaWhite,
-            textContentColor = AlbaTextSecondary,
-            title = {
-                Text(
-                    text = "Confirmar eliminación",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text("¿Estás seguro de que deseas eliminar la solicitud ${solicitud.folio}? Esta acción no se puede deshacer.")
-            },
-            confirmButton = {
+        DialogoAnimadoAlba(alCerrar = { solicitudAEliminar = null }) {
+            Text(
+                text = "Confirmar eliminación",
+                color = AlbaWhite,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "¿Estás seguro de que deseas eliminar la solicitud ${solicitud.folio}? Esta acción no se puede deshacer.",
+                color = AlbaTextSecondary,
+                fontSize = 14.sp,
+                lineHeight = 20.sp
+            )
+            Spacer(modifier = Modifier.height(18.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = { solicitudAEliminar = null }) {
+                    Text("CANCELAR", color = AlbaTextSecondary)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 TextButton(
                     onClick = {
                         usuarioViewModel.eliminarSolicitud(solicitud)
@@ -81,13 +89,8 @@ fun PerfilScreen(
                 ) {
                     Text("ELIMINAR", color = AlbaError, fontWeight = FontWeight.Bold)
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { solicitudAEliminar = null }) {
-                    Text("CANCELAR", color = AlbaTextSecondary)
-                }
             }
-        )
+        }
     }
 
     Column(

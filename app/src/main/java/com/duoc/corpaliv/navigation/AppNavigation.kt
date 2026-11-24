@@ -185,7 +185,6 @@ fun AppNavigation(
                 if (mostrarBarras) {
                     AppTopBar(
                         titulo = tituloParaRuta(rutaActual),
-                        nombreUsuario = sesion.nombre,
                         alAbrirMenu = abrirMenu
                     )
                 }
@@ -199,15 +198,15 @@ fun AppNavigation(
                 }
             }
         ) { innerPadding ->
-            // transiciones minimalistas tipo react: respuesta instantanea y asentamiento sutil sin destellos
-            val entradaSutil = fadeIn(tween(260, easing = FastOutSlowInEasing)) +
-                slideInVertically(tween(280, easing = EaseOutCubic)) { it / 40 }
-            val salidaSutil = fadeOut(tween(150, easing = LinearOutSlowInEasing))
+            // transiciones minimalistas tipo react ligeramente mas largas para apreciar la fluidez
+            val entradaSutil = fadeIn(tween(380, easing = EaseOutCubic)) +
+                slideInVertically(tween(400, easing = EaseOutCubic)) { it / 24 }
+            val salidaSutil = fadeOut(tween(220, easing = LinearOutSlowInEasing))
 
-            val entradaDetalle = fadeIn(tween(260, easing = EaseOutCubic)) +
-                slideInHorizontally(tween(300, easing = EaseOutCubic)) { it / 14 }
-            val salidaDetalle = fadeOut(tween(180, easing = LinearOutSlowInEasing)) +
-                slideOutHorizontally(tween(240, easing = EaseOutCubic)) { it / 14 }
+            val entradaDetalle = fadeIn(tween(360, easing = EaseOutCubic)) +
+                slideInHorizontally(tween(420, easing = EaseOutCubic)) { it / 10 }
+            val salidaDetalle = fadeOut(tween(240, easing = LinearOutSlowInEasing)) +
+                slideOutHorizontally(tween(360, easing = EaseOutCubic)) { it / 10 }
 
             NavHost(
                 navController = navController,

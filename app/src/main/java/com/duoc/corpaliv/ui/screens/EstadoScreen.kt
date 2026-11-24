@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.screens
 
-// pantalla de configuracion limpia sin titulos de demo ni menciones a datastore
-// activa notificaciones locales reales con permiso de android 13+ y alterna modo oscuro con cortina
+// pantalla de configuracion con liquid toggles y notificaciones heads-up reales
+// avisa claramente si el sistema android tiene bloqueado el permiso de notificaciones
 
 import android.Manifest
 import android.os.Build
@@ -49,7 +49,7 @@ import com.duoc.corpaliv.ui.theme.LocalAlternarTema
 import com.duoc.corpaliv.ui.utils.NotificacionHelper
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 
-// vista de configuracion con liquid toggles y notificaciones nativas de android
+// vista de configuracion para alertas nativas y aspecto visual
 @Composable
 fun EstadoScreen(
     alVolver: () -> Unit,
@@ -61,17 +61,21 @@ fun EstadoScreen(
     val alAlternarTema = LocalAlternarTema.current
     val context = LocalContext.current
 
-    // solicita permiso de notificaciones en android 13+ al encender el modo colaborador
+    var permisoBloqueado by remember { mutableStateOf(false) }
+
     val pedirPermisoNotificaciones = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { concedido ->
-        viewModel.alternarEstado()
         if (concedido) {
+            permisoBloqueado = false
+            viewModel.alternarEstado()
             NotificacionHelper.enviarNotificacion(
                 context = context,
                 titulo = "Modo Colaborador activo",
                 mensaje = "Recibirás novedades de campañas y confirmación de tus solicitudes en CORPALIV."
             )
+        } else {
+            permisoBloqueado = true
         }
     }
 
@@ -93,7 +97,10 @@ fun EstadoScreen(
                     !NotificacionHelper.tienePermiso(context)
                 ) {
                     pedirPermisoNotificaciones.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else if (!NotificacionHelper.estaHabilitadoEnSistema(context)) {
+                    permisoBloqueado = true
                 } else {
+                    permisoBloqueado = false
                     viewModel.alternarEstado()
                     NotificacionHelper.enviarNotificacion(
                         context = context,
@@ -102,6 +109,7 @@ fun EstadoScreen(
                     )
                 }
             } else {
+                permisoBloqueado = false
                 viewModel.alternarEstado()
             }
         }
@@ -198,6 +206,36 @@ fun EstadoScreen(
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(top = 10.dp)
                         )
+                    }
+
+                    // aviso util solo si android tiene desactivado el permiso de notificaciones
+                    AnimatedVisibility(visible = permisoBloqueado) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp)
+                                .clip(AlbaShapes.boton)
+                                .background(AlbaOrange.copy(alpha = 0.12f))
+                                .border(1.dp, AlbaOrange.copy(alpha = 0.4f), AlbaShapes.boton)
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = "Las notificaciones están bloqueadas en Android para esta app.",
+                                color = AlbaOrange,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Abrir ajustes del sistema →",
+                                color = AlbaWhite,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.clickable {
+                                    NotificacionHelper.abrirAjustesNotificaciones(context)
+                                }
+                            )
+                        }
                     }
                 }
             }

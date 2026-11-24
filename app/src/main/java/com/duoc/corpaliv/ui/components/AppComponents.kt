@@ -66,11 +66,10 @@ import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalAlternarTema
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 
-// barra superior persistente con boton de menu, titulo y chip de usuario activo
+// barra superior minimalista con boton de menu y titulo perfectamente centrado
 @Composable
 fun AppTopBar(
     titulo: String = "",
-    nombreUsuario: String = "Colaborador",
     alVolver: (() -> Unit)? = null,
     alAbrirMenu: (() -> Unit)? = null
 ) {
@@ -86,7 +85,7 @@ fun AppTopBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(60.dp)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -103,14 +102,14 @@ fun AppTopBar(
                     Text(text = "← Volver", color = AlbaWhite)
                 }
             } else {
-                Spacer(modifier = Modifier.width(44.dp))
+                Spacer(modifier = Modifier.size(48.dp))
             }
 
             Text(
                 text = tituloVisible.uppercase(),
                 color = AlbaTextSecondary,
                 fontSize = 12.sp,
-                letterSpacing = 2.5.sp,
+                letterSpacing = 2.8.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
@@ -120,39 +119,10 @@ fun AppTopBar(
                     .padding(horizontal = 8.dp)
             )
 
-            ChipSesionActiva(nombre = nombreUsuario.ifBlank { "Colaborador" })
+            // espacio equilibrado a la derecha para mantener el titulo centrado y limpio
+            Spacer(modifier = Modifier.size(48.dp))
         }
         HorizontalDivider(color = AlbaBorder, thickness = 1.dp)
-    }
-}
-
-// chip compacto en la barra superior que indica quien ingreso al sistema
-@Composable
-private fun ChipSesionActiva(nombre: String) {
-    Row(
-        modifier = Modifier
-            .widthIn(max = 128.dp)
-            .clip(AlbaShapes.chip)
-            .background(AlbaCard)
-            .border(1.dp, AlbaBorder, AlbaShapes.chip)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(7.dp)
-                .clip(CircleShape)
-                .background(AlbaGreen)
-        )
-        Text(
-            text = nombre,
-            color = AlbaWhite,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 
