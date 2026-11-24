@@ -17,7 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +58,7 @@ fun PerfilScreen(
         solicitudes.any { it.estadoEnvio.startsWith("PENDIENTE") }
     }
 
+    val scope = rememberCoroutineScope()
     var solicitudAEliminar by remember { mutableStateOf<SolicitudEntity?>(null) }
 
     solicitudAEliminar?.let { solicitud ->
@@ -83,8 +87,12 @@ fun PerfilScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(
                     onClick = {
-                        usuarioViewModel.eliminarSolicitud(solicitud)
+                        // cerramos primero el dialogo para evitar lag de ventana + relayout simultaneo
                         solicitudAEliminar = null
+                        scope.launch {
+                            delay(100)
+                            usuarioViewModel.eliminarSolicitud(solicitud)
+                        }
                     }
                 ) {
                     Text("ELIMINAR", color = AlbaError, fontWeight = FontWeight.Bold)
@@ -229,6 +237,7 @@ fun PerfilScreen(
                         shape = AlbaShapes.tarjeta,
                         colors = CardDefaults.cardColors(containerColor = AlbaCard),
                         modifier = Modifier
+                            .animateItem()
                             .fillMaxWidth()
                             .clip(AlbaShapes.tarjeta)
                             .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)

@@ -887,34 +887,37 @@ fun SelectorBottomSheetAlba(
     }
 }
 
-// ventana emergente minimalista con animacion suave de escala y desvanecimiento al abrir
+// ventana emergente minimalista en capa gpu sin subcomposicion extra para abrir y cerrar sin lag
 @Composable
 fun DialogoAnimadoAlba(
     alCerrar: () -> Unit,
     contenido: @Composable ColumnScope.() -> Unit
 ) {
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
+    val progreso = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        progreso.animateTo(1f, tween(220, easing = EaseOutCubic))
+    }
 
     Dialog(
         onDismissRequest = alCerrar,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        AnimatedVisibility(
-            visible = visible,
-            enter = fadeIn(tween(240, easing = EaseOutCubic)) +
-                scaleIn(initialScale = 0.93f, animationSpec = tween(260, easing = EaseOutCubic))
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .clip(AlbaShapes.dialogo)
-                    .background(AlbaCard)
-                    .border(1.dp, AlbaBorder, AlbaShapes.dialogo)
-                    .padding(22.dp),
-                content = contenido
-            )
-        }
+        val p = progreso.value
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .graphicsLayer {
+                    alpha = p
+                    val s = 0.94f + (0.06f * p)
+                    scaleX = s
+                    scaleY = s
+                }
+                .clip(AlbaShapes.dialogo)
+                .background(AlbaCard)
+                .border(1.dp, AlbaBorder, AlbaShapes.dialogo)
+                .padding(22.dp),
+            content = contenido
+        )
     }
 }
