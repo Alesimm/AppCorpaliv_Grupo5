@@ -208,13 +208,6 @@ fun ContactScreen(
                     colors = coloresInputAlba(),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Text(
-                    text = "Acreditada para alianzas y donaciones bajo la Ley de Inclusión Laboral (Ley N° 21.015).",
-                    color = AlbaTextSecondary,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp,
-                    modifier = Modifier.padding(top = 2.dp, start = 4.dp)
-                )
             }
         }
 
