@@ -1,16 +1,24 @@
 package com.duoc.corpaliv.ui.components
 
-// piezas visuales reutilizables que se usan en varias pantallas de la app
-// contiene la barra superior, la barra inferior, el menu lateral y los botones
+// piezas visuales reutilizables de la app: barra superior con chip de usuario,
+// barra inferior con pildora expandible, menu lateral renovado y botones
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Close
@@ -29,29 +37,37 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.duoc.corpaliv.navigation.Screen
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
+import com.duoc.corpaliv.ui.theme.AlbaGreen
 import com.duoc.corpaliv.ui.theme.AlbaOrange
+import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalAlternarTema
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 
-// barra superior que muestra el titulo, el boton del menu y la foto de perfil
+// barra superior con boton de menu, titulo centrado y chip de sesion activa a la derecha
 @Composable
 fun AppTopBar(
     titulo: String = "",
+    nombreUsuario: String = "Colaborador",
     alVolver: (() -> Unit)? = null,
     alAbrirMenu: (() -> Unit)? = null,
     alIrAPerfil: (() -> Unit)? = null
 ) {
+    val tituloVisible = titulo.ifBlank { "ALBA LAB" }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -61,8 +77,8 @@ fun AppTopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
-                .padding(horizontal = 20.dp),
+                .height(62.dp)
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -79,34 +95,63 @@ fun AppTopBar(
                     Text(text = "← Volver", color = AlbaWhite)
                 }
             } else {
-                Spacer(modifier = Modifier.width(40.dp))
+                Spacer(modifier = Modifier.width(44.dp))
             }
 
-            if (titulo.isNotBlank()) {
-                Text(
-                    text = titulo.uppercase(),
-                    color = AlbaTextSecondary,
-                    fontSize = 12.sp,
-                    letterSpacing = 3.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                text = tituloVisible.uppercase(),
+                color = AlbaTextSecondary,
+                fontSize = 12.sp,
+                letterSpacing = 2.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 8.dp)
+            )
 
-            if (alIrAPerfil != null) {
-                AvatarColaborador(
-                    tamano = 36,
-                    alHacerClick = alIrAPerfil
-                )
-            } else {
-                Spacer(modifier = Modifier.width(36.dp))
-            }
+            // chip informativo con punto verde de sesion activa y nombre corto del usuario
+            ChipSesionActiva(
+                nombre = nombreUsuario.ifBlank { "Colaborador" }
+            )
         }
         HorizontalDivider(color = AlbaBorder, thickness = 1.dp)
     }
 }
 
-// foto circular de perfil del usuario que al tocarla abre su perfil
+// insignia compacta en la barra superior que muestra quien ingreso al sistema
+@Composable
+private fun ChipSesionActiva(nombre: String) {
+    Row(
+        modifier = Modifier
+            .widthIn(max = 124.dp)
+            .clip(AlbaShapes.chip)
+            .background(AlbaCard)
+            .border(1.dp, AlbaBorder, AlbaShapes.chip)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .clip(CircleShape)
+                .background(AlbaGreen)
+        )
+        Text(
+            text = nombre,
+            color = AlbaWhite,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+// foto circular de perfil usada en la cabecera de perfilscreen
 @Composable
 fun AvatarColaborador(
     tamano: Int = 36,
@@ -118,7 +163,7 @@ fun AvatarColaborador(
             .size(tamano.dp)
             .clip(CircleShape)
             .background(if (esOscuro) Color(0xFF3A332C) else Color(0xFFF2E6DF))
-            .border(1.dp, AlbaBorder, CircleShape)
+            .border(1.5.dp, AlbaOrange.copy(alpha = 0.5f), CircleShape)
             .then(if (alHacerClick != null) Modifier.clickable { alHacerClick() } else Modifier),
         contentAlignment = Alignment.Center
     ) {
@@ -126,131 +171,207 @@ fun AvatarColaborador(
             imageVector = Icons.Default.Person,
             contentDescription = "Perfil",
             tint = if (esOscuro) Color(0xFFD7B19D) else Color(0xFF8D6853),
-            modifier = Modifier.size((tamano * 0.6f).dp)
+            modifier = Modifier.size((tamano * 0.56f).dp)
         )
     }
 }
 
-// barra de tres botones en la parte de abajo: inicio, catalogo y contacto
+// barra inferior flotante con 4 pestanas y animacion de pildora expandible
 @Composable
 fun AppBottomBar(
     rutaActual: String,
     alNavegar: (Screen) -> Unit
 ) {
-    Column(
+    val esOscuro = LocalEsTemaOscuro.current
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(AlbaBlack)
             .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
-        HorizontalDivider(color = AlbaBorder, thickness = 1.dp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp),
+                .height(62.dp)
+                .shadow(
+                    elevation = if (esOscuro) 2.dp else 8.dp,
+                    shape = AlbaShapes.barraFlotante,
+                    ambientColor = Color.Black.copy(alpha = 0.14f),
+                    spotColor = Color.Black.copy(alpha = 0.14f)
+                )
+                .clip(AlbaShapes.barraFlotante)
+                .background(AlbaCard)
+                .border(1.dp, AlbaBorder, AlbaShapes.barraFlotante)
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ItemBarraInferior(
-                etiqueta = "INICIO",
+            ItemBarraExpandible(
+                etiqueta = "Inicio",
                 icono = Icons.Default.Home,
                 seleccionado = rutaActual == Screen.Home.route,
                 alHacerClick = { alNavegar(Screen.Home) }
             )
-            ItemBarraInferior(
-                etiqueta = "CATÁLOGO",
+            ItemBarraExpandible(
+                etiqueta = "Catálogo",
                 icono = Icons.Default.GridView,
                 seleccionado = rutaActual == Screen.Catalogo.route,
                 alHacerClick = { alNavegar(Screen.Catalogo) }
             )
-            ItemBarraInferior(
-                etiqueta = "CONTACTO",
+            ItemBarraExpandible(
+                etiqueta = "Contacto",
                 icono = Icons.Default.Email,
                 seleccionado = rutaActual == Screen.Contacto.route,
                 alHacerClick = { alNavegar(Screen.Contacto) }
+            )
+            ItemBarraExpandible(
+                etiqueta = "Perfil",
+                icono = Icons.Default.Person,
+                seleccionado = rutaActual == Screen.Perfil.route,
+                alHacerClick = { alNavegar(Screen.Perfil) }
             )
         }
     }
 }
 
-// boton individual de la barra inferior con su icono, texto y rayita naranja
+// boton individual que se expande en pildora con texto solo cuando esta activo
 @Composable
-private fun ItemBarraInferior(
+private fun ItemBarraExpandible(
     etiqueta: String,
-    icono: androidx.compose.ui.graphics.vector.ImageVector,
+    icono: ImageVector,
     seleccionado: Boolean,
     alHacerClick: () -> Unit
 ) {
-    val colorContenido = if (seleccionado) AlbaWhite else AlbaTextSecondary
-    Column(
+    val esOscuro = LocalEsTemaOscuro.current
+    val fondoActivo = if (esOscuro) AlbaOrange.copy(alpha = 0.22f) else AlbaOrange.copy(alpha = 0.14f)
+    val colorFondo by animateColorAsState(
+        targetValue = if (seleccionado) fondoActivo else Color.Transparent,
+        animationSpec = tween(durationMillis = 260),
+        label = "fondoItemBottom"
+    )
+    val colorBorde by animateColorAsState(
+        targetValue = if (seleccionado) AlbaOrange.copy(alpha = 0.35f) else Color.Transparent,
+        animationSpec = tween(durationMillis = 260),
+        label = "bordeItemBottom"
+    )
+    val colorContenido by animateColorAsState(
+        targetValue = if (seleccionado) AlbaOrange else AlbaTextSecondary,
+        animationSpec = tween(durationMillis = 240),
+        label = "colorItemBottom"
+    )
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Row(
         modifier = Modifier
-            .clickable { alHacerClick() }
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .clip(AlbaShapes.chip)
+            .background(colorFondo)
+            .border(1.dp, colorBorde, AlbaShapes.chip)
+            // bloquea re-clicks si el usuario ya esta en esta pestana
+            .clickable(
+                enabled = !seleccionado,
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = alHacerClick
+            )
+            .padding(horizontal = if (seleccionado) 16.dp else 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = icono,
             contentDescription = etiqueta,
             tint = colorContenido,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(21.dp)
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = etiqueta,
-            color = colorContenido,
-            fontSize = 10.sp,
-            letterSpacing = 1.sp,
-            fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Normal
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Box(
-            modifier = Modifier
-                .width(24.dp)
-                .height(2.dp)
-                .background(if (seleccionado) AlbaOrange else Color.Transparent)
-        )
+        AnimatedVisibility(
+            visible = seleccionado,
+            enter = expandHorizontally(
+                animationSpec = spring(
+                    dampingRatio = 0.78f,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeIn(tween(220)),
+            exit = shrinkHorizontally(
+                animationSpec = tween(180)
+            ) + fadeOut(tween(140))
+        ) {
+            Row {
+                Spacer(modifier = Modifier.width(7.dp))
+                Text(
+                    text = etiqueta,
+                    color = colorContenido,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+            }
+        }
     }
 }
 
-// menu que se abre desde el lado izquierdo con accesos a favoritos y ajustes
+// menu lateral con resaltado de ruta activa y liquid toggle para el modo oscuro
 @Composable
 fun AppDrawerContent(
+    rutaActual: String = "",
+    nombreUsuario: String = "Colaborador",
+    correoUsuario: String = "",
     alCerrarMenu: () -> Unit,
     alIrAFavoritos: () -> Unit,
     alIrAConfiguracion: () -> Unit,
     alIrAAcercaDe: () -> Unit,
     alCerrarSesion: () -> Unit
 ) {
+    val esOscuroDrawer = LocalEsTemaOscuro.current
+    val alAlternarTemaDrawer = LocalAlternarTema.current
+
     ModalDrawerSheet(
         drawerContainerColor = AlbaBlack,
         drawerContentColor = AlbaWhite,
-        drawerShape = RoundedCornerShape(0.dp),
+        drawerShape = AlbaShapes.drawer,
         modifier = Modifier
             .fillMaxHeight()
-            .width(300.dp)
-            .border(1.dp, AlbaBorder)
+            .width(304.dp)
+            .border(1.dp, AlbaBorder, AlbaShapes.drawer)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
         ) {
+            // cabecera con marca e identidad de sesion
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                    .padding(horizontal = 22.dp, vertical = 20.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "ALBA LAB",
-                    color = AlbaWhite,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "ALBA LAB",
+                        color = AlbaWhite,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
+                        text = if (correoUsuario.isNotBlank()) correoUsuario else "Fundación CORPALIV",
+                        color = AlbaTextSecondary,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(36.dp)
-                        .border(1.dp, AlbaBorder)
+                        .clip(CircleShape)
+                        .background(AlbaCard)
+                        .border(1.dp, AlbaBorder, CircleShape)
                         .clickable { alCerrarMenu() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -265,44 +386,88 @@ fun AppDrawerContent(
 
             HorizontalDivider(color = AlbaBorder)
 
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // opciones de navegacion con bloqueo de re-click cuando ya estas en esa pantalla
             ItemMenuLateral(
                 texto = "Mis Favoritos",
                 icono = Icons.Default.FavoriteBorder,
-                alHacerClick = alIrAFavoritos
+                activo = rutaActual == Screen.Favoritos.route,
+                alHacerClick = {
+                    if (rutaActual == Screen.Favoritos.route) alCerrarMenu() else alIrAFavoritos()
+                }
             )
-            HorizontalDivider(color = AlbaBorder)
 
             ItemMenuLateral(
                 texto = "Configuración",
                 icono = Icons.Default.Settings,
-                alHacerClick = alIrAConfiguracion
+                activo = rutaActual == Screen.Estado.route,
+                alHacerClick = {
+                    if (rutaActual == Screen.Estado.route) alCerrarMenu() else alIrAConfiguracion()
+                }
             )
-            HorizontalDivider(color = AlbaBorder)
 
             ItemMenuLateral(
                 texto = "Acerca de CORPALIV",
                 icono = Icons.Default.Info,
-                alHacerClick = alIrAAcercaDe
+                activo = rutaActual == Screen.AcercaDe.route,
+                alHacerClick = {
+                    if (rutaActual == Screen.AcercaDe.route) alCerrarMenu() else alIrAAcercaDe()
+                }
             )
-            HorizontalDivider(color = AlbaBorder)
-
-            val esOscuroDrawer = LocalEsTemaOscuro.current
-            val alAlternarTemaDrawer = LocalAlternarTema.current
-            ItemMenuLateral(
-                texto = if (esOscuroDrawer) "Cambiar a Modo Claro" else "Cambiar a Modo Oscuro",
-                icono = if (esOscuroDrawer) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
-                alHacerClick = alAlternarTemaDrawer
-            )
-            HorizontalDivider(color = AlbaBorder)
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // tarjeta dedicada para alternar modo oscuro con liquid toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                    .clip(AlbaShapes.tarjeta)
+                    .background(AlbaCard)
+                    .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
+                    .clickable { alAlternarTemaDrawer() }
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = if (esOscuroDrawer) Icons.Rounded.DarkMode else Icons.Rounded.LightMode,
+                        contentDescription = "Modo Oscuro",
+                        tint = AlbaOrange,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "Modo Oscuro",
+                            color = AlbaWhite,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = if (esOscuroDrawer) "Activado" else "Desactivado",
+                            color = AlbaTextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+                LiquidToggle(
+                    checked = esOscuroDrawer,
+                    onCheckedChange = { alAlternarTemaDrawer() }
+                )
+            }
+
             HorizontalDivider(color = AlbaBorder)
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { alCerrarSesion() }
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                    .padding(horizontal = 24.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -311,48 +476,56 @@ fun AppDrawerContent(
                     tint = AlbaOrange,
                     modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(14.dp))
                 Text(
                     text = "Cerrar Sesión",
                     color = AlbaOrange,
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
     }
 }
 
-// opcion dentro del menu lateral con su icono y texto explicativo
+// opcion individual del menu lateral que resalta la pantalla actual
 @Composable
 private fun ItemMenuLateral(
     texto: String,
-    icono: androidx.compose.ui.graphics.vector.ImageVector,
+    icono: ImageVector,
+    activo: Boolean,
     alHacerClick: () -> Unit
 ) {
+    val fondo = if (activo) AlbaOrange.copy(alpha = 0.14f) else Color.Transparent
+    val colorTexto = if (activo) AlbaOrange else AlbaWhite
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 3.dp)
+            .clip(AlbaShapes.boton)
+            .background(fondo)
             .clickable { alHacerClick() }
-            .padding(horizontal = 24.dp, vertical = 18.dp),
+            .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icono,
             contentDescription = texto,
-            tint = AlbaWhite,
+            tint = colorTexto,
             modifier = Modifier.size(20.dp)
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(14.dp))
         Text(
             text = texto,
-            color = AlbaWhite,
-            fontSize = 15.sp
+            color = colorTexto,
+            fontSize = 15.sp,
+            fontWeight = if (activo) FontWeight.Bold else FontWeight.Medium
         )
     }
 }
 
-// boton grande y blanco usado para las acciones principales como enviar o ingresar
+// boton principal con esquinas redondeadas unificadas
 @Composable
 fun BotonPrincipal(
     texto: String,
@@ -363,7 +536,7 @@ fun BotonPrincipal(
 ) {
     Button(
         onClick = alHacerClick,
-        shape = RoundedCornerShape(2.dp),
+        shape = AlbaShapes.boton,
         colors = ButtonDefaults.buttonColors(
             containerColor = colorFondo,
             contentColor = colorTexto
@@ -381,7 +554,7 @@ fun BotonPrincipal(
     }
 }
 
-// boton con borde fino usado para acciones secundarias como volver o llamar
+// boton secundario con borde fino y esquinas redondeadas
 @Composable
 fun BotonSecundario(
     texto: String,
@@ -390,7 +563,7 @@ fun BotonSecundario(
 ) {
     OutlinedButton(
         onClick = alHacerClick,
-        shape = RoundedCornerShape(2.dp),
+        shape = AlbaShapes.boton,
         border = BorderStroke(1.dp, AlbaBorder),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = AlbaCard,
@@ -409,7 +582,7 @@ fun BotonSecundario(
     }
 }
 
-// tarjeta que se toca para desplegar los telefonos y correos de contacto
+// tarjeta desplegable para mostrar encargados, correos y llamar directo
 @Composable
 fun TarjetaContactoDesplegable(
     area: String,
@@ -423,9 +596,10 @@ fun TarjetaContactoDesplegable(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
+            .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
+            .clip(AlbaShapes.tarjeta)
             .clickable { desplegado = !desplegado },
-        shape = RoundedCornerShape(2.dp),
+        shape = AlbaShapes.tarjeta,
         colors = CardDefaults.cardColors(containerColor = AlbaCard)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
