@@ -1,32 +1,39 @@
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- arco exterior amarillo institucional: taller de oficios / sonrisa corpaliv -->
+    <!-- figura 1: cabeza amarilla y cuerpo morado con techo redondeado -->
     <path
-        android:pathData="M 78,42 A 24,24 0 0,1 30,42"
-        android:strokeWidth="5"
-        android:strokeColor="#FFC21A"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:fillColor="#F7B500"
+        android:pathData="M31.7,51.2m-4.4,0a4.4,4.4 0,1 1,8.8 0a4.4,4.4 0,1 1,-8.8 0" />
+    <path
+        android:fillColor="#5B4B9E"
+        android:pathData="M25.9,62.8C25.9,59.5 28.5,56.9 31.7,56.9C34.9,56.9 37.5,59.5 37.5,62.8L37.5,71.7L25.9,71.7Z" />
 
-    <!-- arco intermedio verde institucional: insercion laboral -->
+    <!-- figura 2: cabeza amarilla y cuerpo triangular magenta con esquinas suaves -->
     <path
-        android:pathData="M 70,42 A 16,16 0 0,1 38,42"
-        android:strokeWidth="5"
-        android:strokeColor="#2FCB7E"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:fillColor="#F7B500"
+        android:pathData="M46.5,43.2m-4.4,0a4.4,4.4 0,1 1,8.8 0a4.4,4.4 0,1 1,-8.8 0" />
+    <path
+        android:fillColor="#E8398D"
+        android:pathData="M45.1,51.4C45.7,49.8 47.3,49.8 47.9,51.4L53.5,69.6C54.0,71.3 53.0,72.7 51.3,72.7L41.7,72.7C40.0,72.7 39.0,71.3 39.5,69.6Z" />
 
-    <!-- arco interior morado institucional: transicion a la vida adulta -->
+    <!-- figura 3: cabeza amarilla y cuerpo verde con esquinas redondeadas -->
     <path
-        android:pathData="M 62,42 A 8,8 0 0,1 46,42"
-        android:strokeWidth="5"
-        android:strokeColor="#9A8DF5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:fillColor="#F7B500"
+        android:pathData="M61.3,49.6m-4.4,0a4.4,4.4 0,1 1,8.8 0a4.4,4.4 0,1 1,-8.8 0" />
+    <path
+        android:fillColor="#2FA84F"
+        android:pathData="M57.5,57.4L65.1,57.4C66.2,57.4 67.1,58.3 67.1,59.4L67.1,69.7C67.1,70.8 66.2,71.7 65.1,71.7L57.5,71.7C56.4,71.7 55.5,70.8 55.5,69.7L55.5,59.4C55.5,58.3 56.4,57.4 57.5,57.4Z" />
+
+    <!-- figura 4: cabeza amarilla y capsula blanca/gris clara -->
+    <path
+        android:fillColor="#F7B500"
+        android:pathData="M76.0,39.4m-4.4,0a4.4,4.4 0,1 1,8.8 0a4.4,4.4 0,1 1,-8.8 0" />
+    <path
+        android:fillColor="#E8E8E8"
+        android:pathData="M70.2,52.2C70.2,49.0 72.8,46.4 76.0,46.4C79.2,46.4 81.8,49.0 81.8,52.2L81.8,65.9C81.8,69.1 79.2,71.7 76.0,71.7C72.8,71.7 70.2,69.1 70.2,65.9Z" />
 
 </vector>
