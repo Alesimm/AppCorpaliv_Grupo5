@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.duoc.corpaliv.ui.components.BotonSecundario
 import com.duoc.corpaliv.ui.components.TarjetaContactoDesplegable
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
@@ -27,6 +28,7 @@ import com.duoc.corpaliv.ui.theme.AlbaPurple
 import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
+import com.duoc.corpaliv.ui.utils.abrirEnlaceWeb
 import com.duoc.corpaliv.ui.utils.llamarPorTelefono
 
 // vista institucional con informacion y canales de contacto ficticios
@@ -151,6 +153,11 @@ fun AcercaDeScreen() {
                 )
             }
         }
+
+        BotonSecundario(
+            texto = "VISITAR SITIO WEB EJEMPLO.CL",
+            alHacerClick = { abrirEnlaceWeb(context, "https://ejemplo.cl") }
+        )
 
         Text(
             text = "Canales de Contacto",
