@@ -65,6 +65,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -87,6 +89,8 @@ import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -207,18 +211,25 @@ fun BotonFavoritoBurst(
         if (esFavorito && !estadoPrevio) {
             animacionActiva = true
             progresoBurst.snapTo(0f)
-            escalaCorazon.snapTo(0.55f)
-            escalaCorazon.animateTo(
-                targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = 0.45f,
-                    stiffness = Spring.StiffnessMedium
-                )
-            )
-            progresoBurst.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 480, easing = EaseOutCubic)
-            )
+            escalaCorazon.snapTo(0.60f)
+            // rebote del corazon y explosion de mini corazones en paralelo para respuesta instantanea
+            coroutineScope {
+                launch {
+                    escalaCorazon.animateTo(
+                        targetValue = 1f,
+                        animationSpec = spring(
+                            dampingRatio = 0.45f,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    )
+                }
+                launch {
+                    progresoBurst.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(durationMillis = 300, easing = EaseOutCubic)
+                    )
+                }
+            }
             animacionActiva = false
         }
         estadoPrevio = esFavorito
@@ -431,7 +442,7 @@ fun SkeletonCardPulse(
     }
 }
 
-// skeleton estructurado que imita el comprobante mientras se procesa una nueva solicitud
+// skeleton 1 a 1 que replica fielmente la estructura real del comprobante mientras se registra
 @Composable
 fun SkeletonComprobantePulse(
     modifier: Modifier = Modifier
@@ -444,7 +455,7 @@ fun SkeletonComprobantePulse(
         initialValue = 0.42f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 750, easing = EaseInOutSine),
+            animation = tween(durationMillis = 760, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
         ),
         label = "alphaSkeletonComp"
@@ -454,45 +465,56 @@ fun SkeletonComprobantePulse(
         modifier = modifier
             .fillMaxWidth()
             .padding(20.dp)
-            .graphicsLayer { alpha = opacidad },
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .graphicsLayer { alpha = opacidad }
     ) {
-        // cabecera simulando el circulo de check y el titulo
+        // cabecera simulando el circulo de check y el titulo "Solicitud enviada"
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(bottom = 10.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(34.dp)
                     .clip(CircleShape)
                     .background(base)
             )
             Box(
                 modifier = Modifier
-                    .width(190.dp)
-                    .height(22.dp)
+                    .width(200.dp)
+                    .height(24.dp)
                     .clip(AlbaShapes.chip)
                     .background(base)
             )
         }
 
+        // dos lineas simulando el subtitulo descriptivo
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .height(13.dp)
+                .fillMaxWidth(0.92f)
+                .height(12.dp)
+                .clip(AlbaShapes.chip)
+                .background(base)
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.62f)
+                .height(12.dp)
                 .clip(AlbaShapes.chip)
                 .background(base)
         )
 
-        // tarjeta simulada del folio correlativo
+        Spacer(modifier = Modifier.height(22.dp))
+
+        // tarjeta simulada del folio correlativo y etiqueta de estado
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(AlbaShapes.tarjeta)
                 .background(AlbaCard)
                 .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
-                .padding(18.dp),
+                .padding(horizontal = 18.dp, vertical = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -506,7 +528,7 @@ fun SkeletonComprobantePulse(
                 )
                 Box(
                     modifier = Modifier
-                        .width(130.dp)
+                        .width(136.dp)
                         .height(20.dp)
                         .clip(AlbaShapes.chip)
                         .background(base)
@@ -514,26 +536,30 @@ fun SkeletonComprobantePulse(
             }
             Box(
                 modifier = Modifier
-                    .width(78.dp)
+                    .width(84.dp)
                     .height(26.dp)
                     .clip(AlbaShapes.chip)
                     .background(base)
             )
         }
 
-        // tarjeta simulada con las filas del comprobante
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // tarjeta simulada con las 8 filas reales del comprobante
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(AlbaShapes.tarjeta)
                 .background(AlbaCard)
                 .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 18.dp, vertical = 10.dp)
         ) {
-            repeat(5) { indice ->
+            val anchosDerecha = intArrayOf(96, 128, 144, 92, 100, 152, 98, 134)
+            for (indice in 0 until 8) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Box(
@@ -545,33 +571,141 @@ fun SkeletonComprobantePulse(
                     )
                     Box(
                         modifier = Modifier
-                            .width(if (indice % 2 == 0) 136.dp else 108.dp)
+                            .width(anchosDerecha[indice].dp)
                             .height(12.dp)
                             .clip(AlbaShapes.chip)
                             .background(base)
                     )
                 }
-                if (indice < 4) {
+                if (indice < 7) {
                     HorizontalDivider(color = AlbaBorder)
                 }
             }
         }
 
-        // indicador discreto debajo del skeleton
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 6.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BouncingDotsLoader(color = AlbaOrange, tamanoPunto = 7.dp)
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "Generando comprobante...",
-                color = AlbaTextSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
+        Spacer(modifier = Modifier.height(22.dp))
+
+        // tres botones simulados al pie (editar, mis solicitudes, inicio)
+        repeat(3) { i ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .clip(AlbaShapes.boton)
+                    .background(base)
+            )
+            if (i < 2) Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+// ticket minimalista animado que traza el circulo, dibuja el check y emite un pulso suave
+@Composable
+fun CheckAnimadoExito(
+    modifier: Modifier = Modifier,
+    color: Color = AlbaOrange,
+    tamano: Dp = 36.dp
+) {
+    val progresoCirculo = remember { Animatable(0f) }
+    val progresoTicket = remember { Animatable(0f) }
+    val progresoPulso = remember { Animatable(0f) }
+    val escalaPop = remember { Animatable(0.85f) }
+
+    LaunchedEffect(Unit) {
+        progresoCirculo.animateTo(1f, tween(340, easing = EaseOutCubic))
+        coroutineScope {
+            launch {
+                progresoTicket.animateTo(1f, tween(260, easing = EaseOutCubic))
+            }
+            launch {
+                escalaPop.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(
+                        dampingRatio = 0.52f,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                )
+            }
+            launch {
+                progresoPulso.animateTo(1f, tween(520, easing = EaseOutCubic))
+            }
+        }
+    }
+
+    Canvas(
+        modifier = modifier
+            .size(tamano)
+            .graphicsLayer {
+                scaleX = escalaPop.value
+                scaleY = escalaPop.value
+            }
+    ) {
+        val trazo = 2.4.dp.toPx()
+        val centro = Offset(size.width / 2f, size.height / 2f)
+        val radioBase = (size.minDimension / 2f) - trazo
+
+        // onda expansiva minimalista que se desvanece alrededor del check
+        if (progresoPulso.value > 0f && progresoPulso.value < 1f) {
+            val alphaOnda = (1f - progresoPulso.value) * 0.45f
+            drawCircle(
+                color = color.copy(alpha = alphaOnda),
+                radius = radioBase * (1f + 0.45f * progresoPulso.value),
+                center = centro,
+                style = Stroke(width = 1.6.dp.toPx())
+            )
+        }
+
+        // relleno tintado suave una vez completado el check
+        drawCircle(
+            color = color.copy(alpha = 0.14f * progresoTicket.value),
+            radius = radioBase,
+            center = centro
+        )
+
+        // arco circular que se dibuja progresivamente de 0 a 360 grados
+        drawArc(
+            color = color,
+            startAngle = -90f,
+            sweepAngle = 360f * progresoCirculo.value,
+            useCenter = false,
+            topLeft = Offset(trazo, trazo),
+            size = Size(size.width - trazo * 2f, size.height - trazo * 2f),
+            style = Stroke(width = trazo, cap = StrokeCap.Round)
+        )
+
+        // trazo del ticket dibujado en dos segmentos fluidos
+        val t = progresoTicket.value
+        if (t > 0f) {
+            val p1 = Offset(size.width * 0.28f, size.height * 0.52f)
+            val p2 = Offset(size.width * 0.44f, size.height * 0.68f)
+            val p3 = Offset(size.width * 0.73f, size.height * 0.36f)
+
+            val pathCheck = Path().apply {
+                moveTo(p1.x, p1.y)
+                if (t < 0.45f) {
+                    val f = t / 0.45f
+                    lineTo(
+                        p1.x + (p2.x - p1.x) * f,
+                        p1.y + (p2.y - p1.y) * f
+                    )
+                } else {
+                    lineTo(p2.x, p2.y)
+                    val f = (t - 0.45f) / 0.55f
+                    lineTo(
+                        p2.x + (p3.x - p2.x) * f,
+                        p2.y + (p3.y - p2.y) * f
+                    )
+                }
+            }
+
+            drawPath(
+                path = pathCheck,
+                color = color,
+                style = Stroke(
+                    width = trazo,
+                    cap = StrokeCap.Round,
+                    join = StrokeJoin.Round
+                )
             )
         }
     }

@@ -1,32 +1,41 @@
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- arco exterior amarillo institucional: taller de oficios / sonrisa corpaliv -->
+    <!-- emblema centrado dentro de la zona segura inspirado en las curvas oficiales de corpaliv -->
+    <!-- arco superior neutro elegante -->
     <path
-        android:pathData="M 78,42 A 24,24 0 0,1 30,42"
-        android:strokeWidth="5"
-        android:strokeColor="#FFC21A"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:pathData="M 30,50 A 24,24 0 0,1 78,50"
+        android:strokeWidth="6.5"
+        android:strokeColor="#2A2927"
+        android:strokeLineCap="round" />
 
-    <!-- arco intermedio verde institucional: insercion laboral -->
+    <!-- sonrisa exterior amarilla institucional -->
     <path
-        android:pathData="M 70,42 A 16,16 0 0,1 38,42"
-        android:strokeWidth="5"
-        android:strokeColor="#2FCB7E"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:pathData="M 78,56 A 24,24 0 0,1 30,56"
+        android:strokeWidth="6.5"
+        android:strokeColor="#FFB300"
+        android:strokeLineCap="round" />
 
-    <!-- arco interior morado institucional: transicion a la vida adulta -->
+    <!-- sonrisa intermedia verde inclusion -->
     <path
-        android:pathData="M 62,42 A 8,8 0 0,1 46,42"
-        android:strokeWidth="5"
-        android:strokeColor="#9A8DF5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:pathData="M 69,56 A 15,15 0 0,1 39,56"
+        android:strokeWidth="6"
+        android:strokeColor="#1FB86A"
+        android:strokeLineCap="round" />
+
+    <!-- nucleo interior morado corpaliv -->
+    <path
+        android:pathData="M 60,56 A 6.5,6.5 0 0,1 48,56"
+        android:strokeWidth="5.5"
+        android:strokeColor="#6352B8"
+        android:strokeLineCap="round" />
+
+    <!-- acento superior punto magenta/naranja simbolo de luz alba lab -->
+    <path
+        android:pathData="M 54,28 m -3.5,0 a 3.5,3.5 0 1,0 7,0 a 3.5,3.5 0 1,0 -7,0"
+        android:fillColor="#EA6A12" />
 
 </vector>

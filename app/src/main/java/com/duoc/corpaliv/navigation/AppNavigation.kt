@@ -11,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -222,8 +223,11 @@ fun AppNavigation(
             ) {
                 composable(
                     route = Screen.Login.route,
-                    enterTransition = { fadeIn(tween(300)) },
-                    exitTransition = { fadeOut(tween(220)) }
+                    enterTransition = { fadeIn(tween(360)) },
+                    exitTransition = {
+                        fadeOut(tween(460, easing = EaseOutCubic)) +
+                            scaleOut(targetScale = 1.03f, animationSpec = tween(460, easing = EaseOutCubic))
+                    }
                 ) {
                     LoginScreen(
                         viewModel = usuarioViewModel,
@@ -235,8 +239,9 @@ fun AppNavigation(
                     route = Screen.Home.route,
                     enterTransition = {
                         if (initialState.destination.route == Screen.Login.route) {
-                            fadeIn(tween(360, easing = EaseOutCubic)) +
-                                scaleIn(initialScale = 0.98f, animationSpec = tween(360, easing = EaseOutCubic))
+                            fadeIn(tween(680, easing = EaseOutCubic)) +
+                                scaleIn(initialScale = 0.94f, animationSpec = tween(680, easing = EaseOutCubic)) +
+                                slideInVertically(tween(680, easing = EaseOutCubic)) { it / 28 }
                         } else {
                             entradaSutil
                         }

@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -193,7 +194,7 @@ fun HomeScreen(
     }
 }
 
-// tarjeta destacada del carrusel con esquinas suaves e ilustracion en cache
+// tarjeta destacada del carrusel con fotografia editorial y degradado para lectura nitida
 @Composable
 private fun TarjetaProgramaDestacado(
     programa: ProgramaSocial,
@@ -202,7 +203,7 @@ private fun TarjetaProgramaDestacado(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(210.dp)
+            .height(216.dp)
             .clip(AlbaShapes.tarjeta)
             .background(AlbaCard)
             .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
@@ -210,12 +211,9 @@ private fun TarjetaProgramaDestacado(
     ) {
         IlustracionPrograma(
             idPrograma = programa.id,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp),
-            escala = if (programa.id == "autonomia_transicion") 0.74f else 0.80f,
-            desplazamientoX = 18.dp,
-            desplazamientoY = 8.dp
+            descripcion = programa.titulo,
+            conDegradadoInferior = true,
+            modifier = Modifier.fillMaxSize()
         )
 
         EtiquetaCategoriaPrograma(
@@ -228,8 +226,8 @@ private fun TarjetaProgramaDestacado(
 
         Text(
             text = programa.titulo,
-            color = AlbaWhite,
-            fontSize = 19.sp,
+            color = Color.White,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(Alignment.BottomStart)

@@ -278,8 +278,8 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
 
             onGuardado(folioGenerado)
 
-            // muestra el skeleton del comprobante brevemente antes de revelar la tarjeta final
-            delay(750)
+            // muestra el skeleton del comprobante para una transicion natural antes de revelar el folio
+            delay(1350)
             _cargandoComprobante.value = false
         }
     }

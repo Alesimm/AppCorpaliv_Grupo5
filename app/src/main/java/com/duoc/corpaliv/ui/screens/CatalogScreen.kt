@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -113,13 +115,15 @@ private fun TarjetaProgramaCatalogo(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp)
+                    .height(176.dp)
                     .background(AlbaCard)
             ) {
                 IlustracionPrograma(
                     idPrograma = programa.id,
-                    modifier = Modifier.fillMaxSize(),
-                    escala = if (programa.id == "autonomia_transicion") 0.85f else 0.92f
+                    descripcion = programa.titulo,
+                    conDegradadoInferior = true,
+                    colorFundidoInferior = Color.Black.copy(alpha = 0.28f),
+                    modifier = Modifier.fillMaxSize()
                 )
 
                 EtiquetaCategoriaPrograma(
@@ -130,13 +134,21 @@ private fun TarjetaProgramaCatalogo(
                         .padding(14.dp)
                 )
 
-                BotonFavoritoBurst(
-                    esFavorito = esFavorito,
-                    alAlternar = alAlternarFavorito,
+                Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(top = 6.dp, end = 6.dp)
-                )
+                        .padding(10.dp)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(AlbaCard.copy(alpha = 0.88f))
+                        .border(1.dp, AlbaBorder, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    BotonFavoritoBurst(
+                        esFavorito = esFavorito,
+                        alAlternar = alAlternarFavorito
+                    )
+                }
             }
 
             Column(modifier = Modifier.padding(18.dp)) {

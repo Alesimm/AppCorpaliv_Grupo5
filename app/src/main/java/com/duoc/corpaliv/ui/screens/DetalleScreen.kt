@@ -106,20 +106,21 @@ fun DetalleScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(240.dp)
-                    .background(colorProg.copy(alpha = 0.16f))
+                    .height(260.dp)
+                    .background(AlbaBlack)
             ) {
                 IlustracionPrograma(
                     idPrograma = programa.id,
+                    descripcion = programa.titulo,
+                    conDegradadoInferior = true,
+                    colorFundidoInferior = AlbaBlack,
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
                             scaleX = escalaEntrada.value
                             scaleY = escalaEntrada.value
                             alpha = alphaEntrada.value
-                        },
-                    escala = if (programa.id == "autonomia_transicion") 1.05f else 1.15f,
-                    desplazamientoY = 16.dp
+                        }
                 )
 
                 Row(

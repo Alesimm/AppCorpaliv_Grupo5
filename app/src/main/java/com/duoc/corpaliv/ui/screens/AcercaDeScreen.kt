@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.screens
 
-// informacion institucional sobre fundacion corpaliv y red sociolaboral alba lab
-// incluye tarjetas desplegables con canales de contacto limpios y llamada directa
+// informacion institucional sobre fundacion corpaliv, escuela jan van dijk, alba lab y ley 21.015
+// mantiene canales de contacto genericos sin exponer datos personales e incluye acceso a corpaliv.cl
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,18 +17,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.duoc.corpaliv.ui.components.BotonSecundario
 import com.duoc.corpaliv.ui.components.TarjetaContactoDesplegable
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
+import com.duoc.corpaliv.ui.theme.AlbaGreen
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaPurple
 import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
+import com.duoc.corpaliv.ui.utils.abrirEnlaceWeb
 import com.duoc.corpaliv.ui.utils.llamarPorTelefono
 
-// vista institucional sin textos de demo ni datos ficticios
+// vista institucional enriquecida con los pilares reales de corpaliv sin datos personales
 @Composable
 fun AcercaDeScreen() {
     val context = LocalContext.current
@@ -49,7 +52,7 @@ fun AcercaDeScreen() {
         )
 
         Text(
-            text = "Organización sin fines de lucro que promueve la autonomía, la participación y la inclusión social y laboral de personas con discapacidad múltiple.",
+            text = "Corporación sin fines de lucro con más de 33 años de trayectoria promoviendo la educación, la autonomía y la inclusión social y laboral de niños, jóvenes y adultos con discapacidad múltiple y sordoceguera.",
             color = AlbaTextSecondary,
             fontSize = 15.sp,
             lineHeight = 22.sp
@@ -72,14 +75,14 @@ fun AcercaDeScreen() {
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Área de Formación Integral",
+                    text = "Escuela Especial Jan Van Dijk",
                     color = AlbaWhite,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Acompañamiento pedagógico y desarrollo de habilidades comunicativas y de autonomía personal.",
+                    text = "Acompañamiento pedagógico interdisciplinario enfocado en habilidades comunicativas, autonomía personal y participación comunitaria.",
                     color = AlbaTextSecondary,
                     fontSize = 14.sp,
                     lineHeight = 20.sp
@@ -111,13 +114,50 @@ fun AcercaDeScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Formación en oficios, preparación para el empleo, elaboración de productos y vinculación con empresas, familias y donantes.",
+                    text = "Taller sociolaboral, intermediación para el empleo y elaboración de productos con propósito como difusores aromáticos, guateros de semillas y bolsas reutilizables.",
                     color = AlbaTextSecondary,
                     fontSize = 14.sp,
                     lineHeight = 20.sp
                 )
             }
         }
+
+        Card(
+            shape = AlbaShapes.tarjeta,
+            colors = CardDefaults.cardColors(containerColor = AlbaCard),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Text(
+                    text = "EMPRESAS ALIADAS · LEY 21.015",
+                    color = AlbaGreen,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Inclusión Laboral Acreditada",
+                    color = AlbaWhite,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Habilitada para gestionar alianzas empresariales, capacitaciones y donaciones en el marco de la Ley de Inclusión Laboral en Chile.",
+                    color = AlbaTextSecondary,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                )
+            }
+        }
+
+        BotonSecundario(
+            texto = "VISITAR SITIO WEB CORPALIV.CL",
+            alHacerClick = { abrirEnlaceWeb(context, "https://corpaliv.cl") }
+        )
 
         Text(
             text = "Canales de Contacto",

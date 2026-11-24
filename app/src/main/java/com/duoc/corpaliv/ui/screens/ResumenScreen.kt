@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duoc.corpaliv.data.SolicitudEntity
 import com.duoc.corpaliv.ui.components.BotonPrincipal
 import com.duoc.corpaliv.ui.components.BotonSecundario
+import com.duoc.corpaliv.ui.components.CheckAnimadoExito
 import com.duoc.corpaliv.ui.components.DialogoAnimadoAlba
 import com.duoc.corpaliv.ui.components.OpcionSelector
 import com.duoc.corpaliv.ui.components.SelectorBottomSheetAlba
@@ -79,6 +80,7 @@ fun ResumenScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(AlbaBlack)
+                    .verticalScroll(rememberScrollState())
             ) {
                 SkeletonComprobantePulse()
             }
@@ -157,19 +159,7 @@ private fun ContenidoComprobante(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .border(2.dp, AlbaOrange, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = AlbaOrange,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
+            CheckAnimadoExito(tamano = 36.dp)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "Solicitud enviada",

@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.theme
 
-// aplica el tema visual a toda la app sin recomponer cada cuadro
-// usa una transicion de cortina en gpu al alternar entre modo claro y oscuro
+// aplica el tema visual con renderizado directo a pantalla para maximos fps
+// solo activa la grabacion de graphicsLayer durante 1 frame al alternar modo claro y oscuro
 
 import android.app.Activity
 import androidx.compose.animation.core.Animatable
@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
@@ -38,7 +39,7 @@ import androidx.core.view.WindowCompat
 import kotlinx.coroutines.launch
 import kotlin.math.sin
 
-// envuelve todas las pantallas y aplica el efecto cortina al cambiar el tema
+// envuelve todas las pantallas y aplica el efecto cortina curvo sin penalizar fps en reposo
 @Composable
 fun AppCorpaliv_Grupo5Theme(
     esTemaOscuro: Boolean = false,
@@ -48,29 +49,35 @@ fun AppCorpaliv_Grupo5Theme(
     val scope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
 
-    // captura del tema anterior para deslizar el nuevo tema encima como una cortina
     var capturaAnterior by remember { mutableStateOf<ImageBitmap?>(null) }
     val progresoCortina = remember { Animatable(1f) }
+    var grabandoSnapshot by remember { mutableStateOf(false) }
     var animandoTema by remember { mutableStateOf(false) }
 
-    // captura la pantalla actual en gpu antes de cambiar el tema y anima la cortina
+    // graba un solo frame antes de alternar el tema para no gastar gpu en cada cuadro normal
     val alternarTemaConCortina: () -> Unit = remember(alAlternarTema) {
         {
             if (!animandoTema) {
                 scope.launch {
                     animandoTema = true
                     try {
+                        grabandoSnapshot = true
+                        // espera un frame para que graphicsLayer capture la vista actual
+                        withFrameNanos { }
                         capturaAnterior = graphicsLayer.toImageBitmap()
+                        grabandoSnapshot = false
                         progresoCortina.snapTo(0f)
                         alAlternarTema()
                         progresoCortina.animateTo(
                             targetValue = 1f,
-                            animationSpec = tween(durationMillis = 550, easing = EaseInOutCubic)
+                            animationSpec = tween(durationMillis = 480, easing = EaseInOutCubic)
                         )
                     } catch (_: Exception) {
+                        grabandoSnapshot = false
                         alAlternarTema()
                     } finally {
                         capturaAnterior = null
+                        grabandoSnapshot = false
                         animandoTema = false
                     }
                 }
@@ -80,7 +87,7 @@ fun AppCorpaliv_Grupo5Theme(
 
     val paletaActiva = if (esTemaOscuro) PaletaOscura else PaletaClara
 
-    // actualiza el color de la ventana y los iconos del sistema para evitar destellos blancos
+    // pinta la ventana del sistema y actualiza iconos de estado para eliminar destellos blancos
     val view = LocalView.current
     if (!view.isInEditMode) {
         LaunchedEffect(esTemaOscuro) {
@@ -136,28 +143,30 @@ fun AppCorpaliv_Grupo5Theme(
             typography = Typography
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                // contenido real grabado en capa gpu para poder capturarlo sin costo extra
+                // renderizado directo a pantalla en uso normal; solo usa graphicsLayer durante la captura
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .drawWithContent {
-                            graphicsLayer.record {
-                                this@drawWithContent.drawContent()
+                            if (grabandoSnapshot) {
+                                graphicsLayer.record {
+                                    this@drawWithContent.drawContent()
+                                }
+                                drawLayer(graphicsLayer)
+                            } else {
+                                drawContent()
                             }
-                            drawLayer(graphicsLayer)
                         }
                 ) {
                     content()
                 }
 
-                // capa superior con el tema viejo que cae con borde curvo revelando el nuevo tema
                 val snapshot = capturaAnterior
                 if (snapshot != null && progresoCortina.value < 1f) {
                     val pathCortina = remember { Path() }
                     val pathBorde = remember { Path() }
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         val t = progresoCortina.value
-                        // la curva se pronuncia en la mitad del recorrido y se aplana al iniciar y terminar
                         val curvaturaMax = 96.dp.toPx()
                         val arco = sin(t * Math.PI).toFloat() * curvaturaMax
                         val baseY = (size.height + curvaturaMax) * t - (arco * 0.35f)
@@ -178,7 +187,6 @@ fun AppCorpaliv_Grupo5Theme(
                             drawImage(image = snapshot)
                         }
 
-                        // borde curvo luminoso que acompana la caida de la cortina
                         pathBorde.reset()
                         pathBorde.moveTo(0f, baseY)
                         pathBorde.quadraticTo(

@@ -29,6 +29,16 @@ fun llamarPorTelefono(context: Context, numero: String) {
     }
 }
 
+// funcion que abre un enlace web en el navegador predeterminado del telefono
+fun abrirEnlaceWeb(context: Context, url: String) {
+    try {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(context, "no se pudo abrir el navegador web", Toast.LENGTH_SHORT).show()
+    }
+}
+
 // funcion que abre la ventana para enviar el texto por whatsapp, correo o mensaje
 fun compartirTextoNativo(context: Context, texto: String) {
     try {
