@@ -610,6 +610,7 @@ fun CheckAnimadoExito(
     val progresoTicket = remember { Animatable(0f) }
     val progresoPulso = remember { Animatable(0f) }
     val escalaPop = remember { Animatable(0.85f) }
+    val pathCheck = remember { Path() }
 
     LaunchedEffect(Unit) {
         progresoCirculo.animateTo(1f, tween(340, easing = EaseOutCubic))
@@ -680,22 +681,21 @@ fun CheckAnimadoExito(
             val p2 = Offset(size.width * 0.44f, size.height * 0.68f)
             val p3 = Offset(size.width * 0.73f, size.height * 0.36f)
 
-            val pathCheck = Path().apply {
-                moveTo(p1.x, p1.y)
-                if (t < 0.45f) {
-                    val f = t / 0.45f
-                    lineTo(
-                        p1.x + (p2.x - p1.x) * f,
-                        p1.y + (p2.y - p1.y) * f
-                    )
-                } else {
-                    lineTo(p2.x, p2.y)
-                    val f = (t - 0.45f) / 0.55f
-                    lineTo(
-                        p2.x + (p3.x - p2.x) * f,
-                        p2.y + (p3.y - p2.y) * f
-                    )
-                }
+            pathCheck.reset()
+            pathCheck.moveTo(p1.x, p1.y)
+            if (t < 0.45f) {
+                val f = t / 0.45f
+                pathCheck.lineTo(
+                    p1.x + (p2.x - p1.x) * f,
+                    p1.y + (p2.y - p1.y) * f
+                )
+            } else {
+                pathCheck.lineTo(p2.x, p2.y)
+                val f = (t - 0.45f) / 0.55f
+                pathCheck.lineTo(
+                    p2.x + (p3.x - p2.x) * f,
+                    p2.y + (p3.y - p2.y) * f
+                )
             }
 
             drawPath(

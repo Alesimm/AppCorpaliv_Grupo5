@@ -161,7 +161,7 @@ fun AppBottomBar(
     alNavegar: (Screen) -> Unit
 ) {
     val esOscuro = LocalEsTemaOscuro.current
-    val formaBarra = RoundedCornerShape(20.dp)
+    val formaBarra = AlbaShapes.barraFlotante
 
     Box(
         modifier = Modifier

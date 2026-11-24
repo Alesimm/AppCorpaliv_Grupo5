@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.utils
 
-// utilidad nativa para emitir notificaciones locales visibles (heads-up) en android
-// usa canal IMPORTANCE_HIGH e icono vectorial monocromatico de 24dp compatible con android 7 a 16
+// utilidad nativa para emitir notificaciones locales visibles (heads-up) sin sonido en android
+// usa canal IMPORTANCE_HIGH silencioso e icono vectorial monocromatico de 24dp
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -20,12 +20,12 @@ import com.duoc.corpaliv.R
 
 object NotificacionHelper {
 
-    // nuevo id de canal con importancia alta para que android muestre el banner emergente en pantalla
-    private const val CANAL_ID = "corpaliv_alertas_v2"
+    // canal silencioso de alta importancia para mostrar banner emergente sin sonido
+    private const val CANAL_ID = "corpaliv_alertas_v3"
     private const val CANAL_NOMBRE = "Alertas CORPALIV"
-    private const val CANAL_DESCRIPCION = "Avisos del modo colaborador y confirmaciones de solicitudes."
+    private const val CANAL_DESCRIPCION = "Avisos silenciosos del modo colaborador y confirmaciones de solicitudes."
 
-    // registra el canal de alta prioridad desde android 8
+    // registra el canal silencioso desde android 8
     fun asegurarCanal(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val canal = NotificationChannel(
@@ -34,7 +34,8 @@ object NotificacionHelper {
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = CANAL_DESCRIPCION
-                enableVibration(true)
+                setSound(null, null)
+                enableVibration(false)
             }
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(canal)
@@ -77,7 +78,7 @@ object NotificacionHelper {
         }
     }
 
-    // dispara una notificacion emergente real y devuelve true si se envio correctamente
+    // dispara una notificacion emergente visual sin sonido y devuelve true si se envio
     fun enviarNotificacion(
         context: Context,
         titulo: String,
@@ -105,7 +106,8 @@ object NotificacionHelper {
             .setStyle(NotificationCompat.BigTextStyle().bigText(mensaje))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setSound(null)
+            .setSilent(true)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()

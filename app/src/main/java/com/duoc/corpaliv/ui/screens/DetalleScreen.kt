@@ -97,73 +97,38 @@ fun DetalleScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp)
-                    .background(AlbaBlack)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
             ) {
-                IlustracionPrograma(
-                    idPrograma = programa.id,
-                    descripcion = programa.titulo,
-                    conDegradadoInferior = true,
-                    colorFundidoInferior = AlbaBlack,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            scaleX = escalaEntrada.value
-                            scaleY = escalaEntrada.value
-                            alpha = alphaEntrada.value
-                        }
-                )
-
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .height(260.dp)
+                        .background(AlbaBlack)
                 ) {
-                    Box(
+                    IlustracionPrograma(
+                        idPrograma = programa.id,
+                        descripcion = programa.titulo,
+                        conDegradadoInferior = true,
+                        colorFundidoInferior = AlbaBlack,
                         modifier = Modifier
-                            .size(44.dp)
-                            .clip(AlbaShapes.boton)
-                            .background(AlbaCard)
-                            .border(1.dp, AlbaBorder, AlbaShapes.boton)
-                            .clickable { alVolver() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Volver",
-                            tint = AlbaWhite
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(AlbaShapes.boton)
-                            .background(AlbaCard)
-                            .border(1.dp, AlbaBorder, AlbaShapes.boton),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        BotonFavoritoBurst(
-                            esFavorito = esFavorito,
-                            alAlternar = { estadoViewModel.alternarFavorito(programa.id) }
-                        )
-                    }
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = escalaEntrada.value
+                                scaleY = escalaEntrada.value
+                                alpha = alphaEntrada.value
+                            }
+                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 val colorCategoria = if (esOscuro) {
@@ -324,6 +289,48 @@ fun DetalleScreen(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+
+            // barra flotante fija arriba: volver y favorito siguen al usuario al bajar por el programa
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(AlbaShapes.boton)
+                        .background(AlbaCard.copy(alpha = 0.92f))
+                        .border(1.dp, AlbaBorder, AlbaShapes.boton)
+                        .clickable { alVolver() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "Volver",
+                        tint = AlbaWhite
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(AlbaShapes.boton)
+                        .background(AlbaCard.copy(alpha = 0.92f))
+                        .border(1.dp, AlbaBorder, AlbaShapes.boton),
+                    contentAlignment = Alignment.Center
+                ) {
+                    BotonFavoritoBurst(
+                        esFavorito = esFavorito,
+                        alAlternar = { estadoViewModel.alternarFavorito(programa.id) }
+                    )
+                }
             }
         }
     }

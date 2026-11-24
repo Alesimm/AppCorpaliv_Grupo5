@@ -252,16 +252,21 @@ fun ContactScreen(
             onClick = {
                 if (viewModel.validarFormulario()) {
                     val conectado = hayConexionInternet(context)
-                    viewModel.guardarEnSqlite(conectado) { folio ->
-                        if (modoColaboradorActivo == true) {
-                            NotificacionHelper.enviarNotificacion(
-                                context = context,
-                                titulo = "Solicitud $folio registrada",
-                                mensaje = "Gracias por colaborar con Fundación CORPALIV. Revisaremos tu propuesta pronto."
-                            )
+                    val appContext = context.applicationContext
+                    val notificarAlFinal = modoColaboradorActivo == true
+                    viewModel.guardarEnSqlite(
+                        hayInternet = conectado,
+                        onGuardado = { alIrAResumen() },
+                        onComprobanteListo = { folio ->
+                            if (notificarAlFinal) {
+                                NotificacionHelper.enviarNotificacion(
+                                    context = appContext,
+                                    titulo = "Solicitud $folio registrada",
+                                    mensaje = "Gracias por colaborar con Fundación CORPALIV. Revisaremos tu propuesta pronto."
+                                )
+                            }
                         }
-                        alIrAResumen()
-                    }
+                    )
                 }
             },
             shape = AlbaShapes.boton,

@@ -245,8 +245,12 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         return !hayErrores
     }
 
-    // guarda la solicitud en sqlite y devuelve el folio generado para confirmar o notificar
-    fun guardarEnSqlite(hayInternet: Boolean, onGuardado: (String) -> Unit = {}) {
+    // guarda la solicitud en sqlite, abre el skeleton y avisa cuando el comprobante ya esta visible
+    fun guardarEnSqlite(
+        hayInternet: Boolean,
+        onGuardado: (String) -> Unit = {},
+        onComprobanteListo: (String) -> Unit = {}
+    ) {
         val actual = _estado.value
         val fechaHoy = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
         val estadoInicial = if (hayInternet) "RECIBIDA" else "PENDIENTE SIN RED"
@@ -281,6 +285,10 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             // muestra el skeleton del comprobante para una transicion natural antes de revelar el folio
             delay(1350)
             _cargandoComprobante.value = false
+
+            // espera breve para que el ticket animado se dibuje y luego dispara la notificacion
+            delay(350)
+            onComprobanteListo(folioGenerado)
         }
     }
 
