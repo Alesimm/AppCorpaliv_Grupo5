@@ -34,6 +34,7 @@ import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaPurple
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
+import com.duoc.corpaliv.ui.theme.LocalAlternarTema
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 
 // pantalla de configuracion para activar alertas de ayuda y cambiar el tema
@@ -80,6 +81,7 @@ fun EstadoScreen(
             val estaActivo = estado.value!!
 
             val esOscuro by viewModel.esTemaOscuro.collectAsState()
+            val alternarTemaConCortina = LocalAlternarTema.current
 
             // color suave para el boton cuando las notificaciones estan apagadas
             val fondoInactivo = if (esOscuro) Color(0xFF262626) else Color(0xFFEBE7DD)
@@ -231,7 +233,7 @@ fun EstadoScreen(
                         Spacer(modifier = Modifier.height(20.dp))
 
                         Button(
-                            onClick = { viewModel.alternarTema() },
+                            onClick = alternarTemaConCortina,
                             shape = RoundedCornerShape(2.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (esOscuro) AlbaOrange else AlbaPurple,

@@ -1,14 +1,13 @@
 package com.duoc.corpaliv.ui.components
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -23,10 +22,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.duoc.corpaliv.ui.theme.AlbaOrange
+import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
 
-// dibuja las curvas y arcos de colores del logo oficial usando codigo canvas nativo
-// se adapta solo si la app esta en modo claro o en modo oscuro
+// dibuja las curvas y arcos de colores del logo oficial usando drawWithCache
+// calcula las rutas una sola vez por tamano para mantener 60 a 120 fps al hacer scroll
 
 // devuelve el color oficial de cada programa: amarillo, verde o morado
 fun colorDelPrograma(id: String): Color = when (id) {
@@ -36,7 +36,7 @@ fun colorDelPrograma(id: String): Color = when (id) {
     else -> AlbaOrange
 }
 
-// pastilla de color con el nombre de la categoria en letras mayusculas
+// pastilla redondeada con el nombre de la categoria en letras mayusculas
 @Composable
 fun EtiquetaCategoriaPrograma(
     idPrograma: String,
@@ -47,10 +47,10 @@ fun EtiquetaCategoriaPrograma(
 
     val (colorFondo, colorBorde, colorTexto) = if (esOscuro) {
         when (idPrograma) {
-            "taller_oficios" -> Triple(Color(0xFF1E1700), Color(0xFFFFC21A).copy(alpha = 0.7f), Color(0xFFFFC21A))
-            "insercion_laboral" -> Triple(Color(0xFF0D251A), Color(0xFF2FCB7E).copy(alpha = 0.7f), Color(0xFF2FCB7E))
-            "autonomia_transicion" -> Triple(Color(0xFF18152A), Color(0xFF9A8DF5).copy(alpha = 0.7f), Color(0xFF9A8DF5))
-            else -> Triple(Color(0xFF261505), AlbaOrange.copy(alpha = 0.7f), AlbaOrange)
+            "taller_oficios" -> Triple(Color(0xFF1E1700), Color(0xFFFFC21A).copy(alpha = 0.65f), Color(0xFFFFC21A))
+            "insercion_laboral" -> Triple(Color(0xFF0D251A), Color(0xFF2FCB7E).copy(alpha = 0.65f), Color(0xFF2FCB7E))
+            "autonomia_transicion" -> Triple(Color(0xFF18152A), Color(0xFF9A8DF5).copy(alpha = 0.65f), Color(0xFF9A8DF5))
+            else -> Triple(Color(0xFF261505), AlbaOrange.copy(alpha = 0.65f), AlbaOrange)
         }
     } else {
         when (idPrograma) {
@@ -63,9 +63,9 @@ fun EtiquetaCategoriaPrograma(
 
     Box(
         modifier = modifier
-            .background(colorFondo, RoundedCornerShape(2.dp))
-            .border(1.dp, colorBorde, RoundedCornerShape(2.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .background(colorFondo, AlbaShapes.chip)
+            .border(1.dp, colorBorde, AlbaShapes.chip)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Text(
             text = categoria.uppercase(),
@@ -77,7 +77,7 @@ fun EtiquetaCategoriaPrograma(
     }
 }
 
-// dibuja en pantalla las curvas oficiales del logo segun el programa elegido
+// dibuja en pantalla las curvas oficiales del logo con geometria en cache para cero lag
 @Composable
 fun IlustracionPrograma(
     idPrograma: String,
@@ -86,135 +86,134 @@ fun IlustracionPrograma(
     desplazamientoX: Dp = 0.dp,
     desplazamientoY: Dp = 0.dp
 ) {
-    Canvas(modifier = modifier) {
-        val ancho = size.width
-        val alto = size.height
-        val trazoPx = 14.dp.toPx() * escala
+    Box(
+        modifier = modifier.drawWithCache {
+            val ancho = size.width
+            val alto = size.height
+            val trazoPx = 14.dp.toPx() * escala
+            val estiloArco = Stroke(width = trazoPx, cap = StrokeCap.Round)
+            val estiloOnda = Stroke(width = trazoPx, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            val dx = desplazamientoX.toPx()
+            val dy = desplazamientoY.toPx()
 
-        when (idPrograma) {
-            "taller_oficios" -> {
-                // dibuja tres arcos amarillos hacia abajo con distintos tonos
-                val colorBase = Color(0xFFFFC21A)
-                val radioMayor = 70.dp.toPx() * escala
-                val cx = (ancho / 2f) + desplazamientoX.toPx()
-                val cy = (alto * 0.38f) + desplazamientoY.toPx()
+            when (idPrograma) {
+                "taller_oficios" -> {
+                    // tres arcos amarillos hacia abajo precalculados en cache
+                    val colorBase = Color(0xFFFFC21A)
+                    val cx = (ancho / 2f) + dx
+                    val cy = (alto * 0.38f) + dy
+                    val radios = floatArrayOf(70.dp.toPx() * escala, 46.dp.toPx() * escala, 22.dp.toPx() * escala)
+                    val colores = arrayOf(colorBase, colorBase.copy(alpha = 0.60f), colorBase.copy(alpha = 0.30f))
 
-                val arcos = listOf(
-                    radioMayor to 1.0f,
-                    46.dp.toPx() * escala to 0.60f,
-                    22.dp.toPx() * escala to 0.30f
-                )
-
-                arcos.forEach { (r, alpha) ->
-                    drawArc(
-                        color = colorBase.copy(alpha = alpha),
-                        startAngle = 0f,
-                        sweepAngle = 180f,
-                        useCenter = false,
-                        topLeft = Offset(cx - r, cy - r),
-                        size = Size(r * 2f, r * 2f),
-                        style = Stroke(width = trazoPx, cap = StrokeCap.Round)
-                    )
-                }
-            }
-            "insercion_laboral" -> {
-                // dibuja una ola verde continua de curvas hacia arriba y abajo
-                val colorBase = Color(0xFF2FCB7E)
-                val rOnda = 14.dp.toPx() * escala
-                val anchoOnda = 10f * rOnda
-                val desplazamientoOndaY = 26.dp.toPx() * escala
-                val startX = (ancho / 2f) - (anchoOnda / 2f) + desplazamientoX.toPx()
-                val cy = (alto * 0.48f) + desplazamientoY.toPx()
-
-                fun trazarOnda(offsetY: Float): Path {
-                    val path = Path()
-                    path.moveTo(startX, offsetY)
-                    var xActual = startX
-                    for (i in 0 until 5) {
-                        val esArcoArriba = (i % 2 == 0)
-                        val rect = Rect(
-                            left = xActual,
-                            top = offsetY - rOnda,
-                            right = xActual + (2f * rOnda),
-                            bottom = offsetY + rOnda
-                        )
-                        if (esArcoArriba) {
-                            path.arcTo(rect, startAngleDegrees = 180f, sweepAngleDegrees = -180f, forceMoveTo = false)
-                        } else {
-                            path.arcTo(rect, startAngleDegrees = 180f, sweepAngleDegrees = 180f, forceMoveTo = false)
+                    onDrawBehind {
+                        for (i in radios.indices) {
+                            val r = radios[i]
+                            drawArc(
+                                color = colores[i],
+                                startAngle = 0f,
+                                sweepAngle = 180f,
+                                useCenter = false,
+                                topLeft = Offset(cx - r, cy - r),
+                                size = Size(r * 2f, r * 2f),
+                                style = estiloArco
+                            )
                         }
-                        xActual += (2f * rOnda)
                     }
-                    return path
                 }
+                "insercion_laboral" -> {
+                    // ola verde continua precalculada una sola vez por tamano
+                    val colorBase = Color(0xFF2FCB7E)
+                    val colorSecundario = colorBase.copy(alpha = 0.35f)
+                    val rOnda = 14.dp.toPx() * escala
+                    val anchoOnda = 10f * rOnda
+                    val desplazamientoOndaY = 26.dp.toPx() * escala
+                    val startX = (ancho / 2f) - (anchoOnda / 2f) + dx
+                    val cy = (alto * 0.48f) + dy
 
-                // onda secundaria inferior al 35% de opacidad
-                drawPath(
-                    path = trazarOnda(cy + desplazamientoOndaY),
-                    color = colorBase.copy(alpha = 0.35f),
-                    style = Stroke(width = trazoPx, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                )
+                    fun crearOnda(offsetY: Float): Path {
+                        val path = Path()
+                        path.moveTo(startX, offsetY)
+                        var xActual = startX
+                        for (i in 0 until 5) {
+                            val rect = Rect(
+                                left = xActual,
+                                top = offsetY - rOnda,
+                                right = xActual + (2f * rOnda),
+                                bottom = offsetY + rOnda
+                            )
+                            val sweep = if (i % 2 == 0) -180f else 180f
+                            path.arcTo(rect, startAngleDegrees = 180f, sweepAngleDegrees = sweep, forceMoveTo = false)
+                            xActual += (2f * rOnda)
+                        }
+                        return path
+                    }
 
-                // onda principal superior al 100% de opacidad
-                drawPath(
-                    path = trazarOnda(cy),
-                    color = colorBase,
-                    style = Stroke(width = trazoPx, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                )
-            }
-            "autonomia_transicion" -> {
-                // dibuja tres arcos morados hacia arriba mas una barra vertical
-                val colorBase = Color(0xFF9A8DF5)
-                val rMayor = 90.dp.toPx() * escala
-                val cx = (ancho / 2f) + (8.dp.toPx() * escala) + desplazamientoX.toPx()
-                val cy = (alto * 0.78f) + desplazamientoY.toPx()
+                    val pathSecundario = crearOnda(cy + desplazamientoOndaY)
+                    val pathPrincipal = crearOnda(cy)
 
-                val arcos = listOf(
-                    rMayor to 0.30f,
-                    62.dp.toPx() * escala to 0.60f,
-                    34.dp.toPx() * escala to 1.0f
-                )
+                    onDrawBehind {
+                        drawPath(path = pathSecundario, color = colorSecundario, style = estiloOnda)
+                        drawPath(path = pathPrincipal, color = colorBase, style = estiloOnda)
+                    }
+                }
+                "autonomia_transicion" -> {
+                    // tres arcos morados hacia arriba mas barra vertical precalculados
+                    val colorBase = Color(0xFF9A8DF5)
+                    val rMayor = 90.dp.toPx() * escala
+                    val cx = (ancho / 2f) + (8.dp.toPx() * escala) + dx
+                    val cy = (alto * 0.78f) + dy
+                    val radios = floatArrayOf(rMayor, 62.dp.toPx() * escala, 34.dp.toPx() * escala)
+                    val colores = arrayOf(colorBase.copy(alpha = 0.30f), colorBase.copy(alpha = 0.60f), colorBase)
 
-                arcos.forEach { (r, alpha) ->
-                    drawArc(
-                        color = colorBase.copy(alpha = alpha),
-                        startAngle = 180f,
-                        sweepAngle = 180f,
-                        useCenter = false,
-                        topLeft = Offset(cx - r, cy - r),
-                        size = Size(r * 2f, r * 2f),
-                        style = Stroke(width = trazoPx, cap = StrokeCap.Round)
+                    val altoPastilla = 32.dp.toPx() * escala
+                    val pastillaOffset = Offset(
+                        cx - rMayor - (4.dp.toPx() * escala),
+                        cy - rMayor + (12.dp.toPx() * escala)
                     )
+                    val pastillaSize = Size(trazoPx, altoPastilla)
+                    val pastillaRadio = CornerRadius(trazoPx / 2f, trazoPx / 2f)
+
+                    onDrawBehind {
+                        for (i in radios.indices) {
+                            val r = radios[i]
+                            drawArc(
+                                color = colores[i],
+                                startAngle = 180f,
+                                sweepAngle = 180f,
+                                useCenter = false,
+                                topLeft = Offset(cx - r, cy - r),
+                                size = Size(r * 2f, r * 2f),
+                                style = estiloArco
+                            )
+                        }
+                        drawRoundRect(
+                            color = colorBase,
+                            topLeft = pastillaOffset,
+                            size = pastillaSize,
+                            cornerRadius = pastillaRadio
+                        )
+                    }
                 }
+                else -> {
+                    val r = 40.dp.toPx() * escala
+                    val cx = (ancho / 2f) + dx
+                    val cy = (alto / 2f) + dy
+                    val topLeft = Offset(cx - r, cy - r)
+                    val arcSize = Size(r * 2f, r * 2f)
 
-                // pastilla vertical estilizada al costado izquierdo simulando la letra i del logo
-                val anchoPastilla = trazoPx
-                val altoPastilla = 32.dp.toPx() * escala
-                val pastillaX = cx - rMayor - (4.dp.toPx() * escala)
-                val pastillaY = cy - rMayor + (12.dp.toPx() * escala)
-
-                drawRoundRect(
-                    color = colorBase,
-                    topLeft = Offset(pastillaX, pastillaY),
-                    size = Size(anchoPastilla, altoPastilla),
-                    cornerRadius = CornerRadius(anchoPastilla / 2f, anchoPastilla / 2f)
-                )
-            }
-            else -> {
-                // dibuja una curva naranja basica si es otro programa
-                val r = 40.dp.toPx() * escala
-                val cx = (ancho / 2f) + desplazamientoX.toPx()
-                val cy = (alto / 2f) + desplazamientoY.toPx()
-                drawArc(
-                    color = AlbaOrange,
-                    startAngle = 0f,
-                    sweepAngle = 180f,
-                    useCenter = false,
-                    topLeft = Offset(cx - r, cy - r),
-                    size = Size(r * 2f, r * 2f),
-                    style = Stroke(width = trazoPx, cap = StrokeCap.Round)
-                )
+                    onDrawBehind {
+                        drawArc(
+                            color = AlbaOrange,
+                            startAngle = 0f,
+                            sweepAngle = 180f,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = arcSize,
+                            style = estiloArco
+                        )
+                    }
+                }
             }
         }
-    }
+    )
 }

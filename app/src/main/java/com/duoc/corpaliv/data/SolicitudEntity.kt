@@ -3,10 +3,12 @@ package com.duoc.corpaliv.data
 // tabla de la base de datos que guarda las solicitudes de contacto
 // tiene campos como id, folio, nombre, correo, fecha y estado de envio
 
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 // estructura de datos de cada fila guardada en la tabla solicitudes
+@Immutable
 @Entity(tableName = "solicitudes")
 data class SolicitudEntity(
     @PrimaryKey(autoGenerate = true)

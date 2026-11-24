@@ -4,10 +4,13 @@ package com.duoc.corpaliv.ui.theme
 // define los fondos, textos, bordes y colores institucionales como naranja y morado
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 // grupo de colores necesarios para pintar una pantalla completa
+@Immutable
 data class AlbaPalette(
     val fondo: Color,
     val tarjeta: Color,
@@ -47,7 +50,7 @@ val LocalAlbaPalette = compositionLocalOf { PaletaClara }
 val LocalEsTemaOscuro = compositionLocalOf { false }
 
 // funcion para cambiar de tema claro a oscuro desde cualquier boton
-val LocalAlternarTema = compositionLocalOf<() -> Unit> { {} }
+val LocalAlternarTema = staticCompositionLocalOf<() -> Unit> { {} }
 
 // variables dinamicas para que las pantallas tomen el color correcto automaticamente
 val AlbaBlack: Color
