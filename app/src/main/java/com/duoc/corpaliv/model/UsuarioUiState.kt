@@ -3,9 +3,18 @@ package com.duoc.corpaliv.model
 // guarda todos los datos actuales de la pantalla como el usuario activo y lo que escribe
 // cuando algo cambia aqui las vistas de compose se redibujan solas al instante
 
+import androidx.compose.runtime.Immutable
 import com.duoc.corpaliv.validation.CredencialesPrueba
 
+// datos de la sesion activa separados del formulario para evitar recomposiciones cruzadas
+@Immutable
+data class SesionActiva(
+    val nombre: String = "Colaborador",
+    val correo: String = ""
+)
+
 // estado completo de la sesion del usuario y del formulario de contacto
+@Immutable
 data class UsuarioUiState(
     val correoLogin: String = CredencialesPrueba.CORREO,
     val claveLogin: String = CredencialesPrueba.CLAVE,

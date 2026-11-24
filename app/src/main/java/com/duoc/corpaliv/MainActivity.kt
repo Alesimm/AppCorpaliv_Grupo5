@@ -1,34 +1,46 @@
 package com.duoc.corpaliv
 
-// es la pantalla de inicio de la app en android
-// carga el diseno visual, lee el tema oscuro o claro y abre el menu de navegacion
+// punto de entrada de la app en android
+// configura el canal de notificaciones, tamano de pantalla, tema con cortina y navegacion
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.duoc.corpaliv.navigation.AppNavigation
 import com.duoc.corpaliv.ui.theme.AppCorpaliv_Grupo5Theme
+import com.duoc.corpaliv.ui.utils.LocalWindowWidthSizeClass
+import com.duoc.corpaliv.ui.utils.NotificacionHelper
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 
 class MainActivity : ComponentActivity() {
 
-    // arranca la app en pantalla completa y conecta el tema elegido con las vistas
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            val estadoViewModel: EstadoViewModel = viewModel()
-            val esTemaOscuro by estadoViewModel.esTemaOscuro.collectAsState()
+        NotificacionHelper.asegurarCanal(this)
 
-            AppCorpaliv_Grupo5Theme(
-                esTemaOscuro = esTemaOscuro,
-                alAlternarTema = { estadoViewModel.alternarTema() }
+        setContent {
+            val windowSizeClass = calculateWindowSizeClass(this)
+            val estadoViewModel: EstadoViewModel = viewModel()
+            val esTemaOscuro by estadoViewModel.esTemaOscuro.collectAsStateWithLifecycle()
+
+            CompositionLocalProvider(
+                LocalWindowWidthSizeClass provides windowSizeClass.widthSizeClass
             ) {
-                AppNavigation(estadoViewModel = estadoViewModel)
+                AppCorpaliv_Grupo5Theme(
+                    esTemaOscuro = esTemaOscuro,
+                    alAlternarTema = { estadoViewModel.alternarTema() }
+                ) {
+                    AppNavigation(estadoViewModel = estadoViewModel)
+                }
             }
         }
     }

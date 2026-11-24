@@ -1,37 +1,47 @@
 package com.duoc.corpaliv.ui.screens
 
+// vista completa de un programa social con botones nativos para llamar y compartir
+// incorpora animacion heart burst en favorito y entrada suave de la ilustracion
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.duoc.corpaliv.ui.components.BotonFavoritoBurst
 import com.duoc.corpaliv.ui.components.BotonPrincipal
-import com.duoc.corpaliv.ui.components.colorDelPrograma
 import com.duoc.corpaliv.ui.components.IlustracionPrograma
+import com.duoc.corpaliv.ui.components.colorDelPrograma
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaOrange
+import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
@@ -40,10 +50,7 @@ import com.duoc.corpaliv.ui.utils.llamarPorTelefono
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
 
-// muestra toda la informacion del programa elegido con botones para llamar y compartir
-// incluye el boton quiero colaborar que lleva directo al formulario con el programa listo
-
-// vista completa del programa con su historia, impacto social y acciones nativas
+// detalle del programa con impacto social, testimonio y accion directa hacia contacto
 @Composable
 fun DetalleScreen(
     usuarioViewModel: UsuarioViewModel,
@@ -51,13 +58,22 @@ fun DetalleScreen(
     alVolver: () -> Unit = {},
     alQuieroColaborar: () -> Unit = {}
 ) {
-    val programa by usuarioViewModel.programaSeleccionado.collectAsState()
-    val favoritos by estadoViewModel.favoritos.collectAsState()
+    val programa by usuarioViewModel.programaSeleccionado.collectAsStateWithLifecycle()
+    val favoritos by estadoViewModel.favoritos.collectAsStateWithLifecycle()
     val esFavorito = favoritos.contains(programa.id)
     val esOscuro = LocalEsTemaOscuro.current
     val colorProg = colorDelPrograma(programa.id)
-    val colorCorazon = if (esFavorito) (if (esOscuro) AlbaWhite else Color(0xFF121212)) else AlbaTextSecondary
     val context = LocalContext.current
+
+    // entrada sutil de zoom-out y aparicion para la cabecera del programa
+    val escalaEntrada = remember { Animatable(1.05f) }
+    val alphaEntrada = remember { Animatable(0f) }
+    LaunchedEffect(programa.id) {
+        escalaEntrada.snapTo(1.05f)
+        alphaEntrada.snapTo(0f)
+        alphaEntrada.animateTo(1f, tween(360, easing = EaseOutCubic))
+        escalaEntrada.animateTo(1f, tween(420, easing = EaseOutCubic))
+    }
 
     Scaffold(
         containerColor = AlbaBlack,
@@ -81,69 +97,39 @@ fun DetalleScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
-            // cabecera con el color institucional del programa de fondo
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp)
-                    .background(colorProg.copy(alpha = 0.18f))
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
             ) {
-                // dibujo vectorial ampliado de las curvas del logo
-                IlustracionPrograma(
-                    idPrograma = programa.id,
-                    modifier = Modifier.fillMaxSize(),
-                    escala = if (programa.id == "autonomia_transicion") 1.05f else 1.15f,
-                    desplazamientoY = 16.dp
-                )
-
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .height(260.dp)
+                        .background(AlbaBlack)
                 ) {
-                    Box(
+                    IlustracionPrograma(
+                        idPrograma = programa.id,
+                        descripcion = programa.titulo,
+                        conDegradadoInferior = true,
+                        colorFundidoInferior = AlbaBlack,
                         modifier = Modifier
-                            .size(42.dp)
-                            .background(AlbaCard, RoundedCornerShape(2.dp))
-                            .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
-                            .clickable { alVolver() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Volver",
-                            tint = AlbaWhite
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .background(AlbaCard, RoundedCornerShape(2.dp))
-                            .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
-                            .clickable { estadoViewModel.alternarFavorito(programa.id) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (esFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (esFavorito) "Quitar de favoritos" else "Favorito",
-                            tint = colorCorazon,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = escalaEntrada.value
+                                scaleY = escalaEntrada.value
+                                alpha = alphaEntrada.value
+                            }
+                    )
                 }
-            }
 
-            // texto con la categoria, el titulo y la explicacion del programa
+                Spacer(modifier = Modifier.height(16.dp))
+
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 val colorCategoria = if (esOscuro) {
                     colorProg
@@ -184,14 +170,14 @@ fun DetalleScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // botones nativos para abrir el marcador del telefono o compartir en redes
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedButton(
                         onClick = { llamarPorTelefono(context, programa.telefonoContacto) },
-                        shape = RoundedCornerShape(2.dp),
+                        shape = AlbaShapes.boton,
+                        border = BorderStroke(1.dp, AlbaBorder),
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = AlbaCard,
                             contentColor = AlbaWhite
@@ -216,7 +202,8 @@ fun DetalleScreen(
                                 "Conoce el programa ${programa.titulo} de Fundación CORPALIV (Alba Lab): ${programa.descripcion}"
                             )
                         },
-                        shape = RoundedCornerShape(2.dp),
+                        shape = AlbaShapes.boton,
+                        border = BorderStroke(1.dp, AlbaBorder),
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = AlbaCard,
                             contentColor = AlbaWhite
@@ -237,13 +224,12 @@ fun DetalleScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // tarjeta con el impacto social y testimonio de participantes
                 Card(
-                    shape = RoundedCornerShape(2.dp),
+                    shape = AlbaShapes.tarjeta,
                     colors = CardDefaults.cardColors(containerColor = AlbaCard),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
+                        .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(
@@ -278,13 +264,12 @@ fun DetalleScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // tarjeta que explica en que se usa el aporte de los colaboradores
                 Card(
-                    shape = RoundedCornerShape(2.dp),
+                    shape = AlbaShapes.tarjeta,
                     colors = CardDefaults.cardColors(containerColor = AlbaCard),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, AlbaBorder, RoundedCornerShape(2.dp))
+                        .border(1.dp, AlbaBorder, AlbaShapes.tarjeta)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(
@@ -304,6 +289,48 @@ fun DetalleScreen(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+
+            // barra flotante fija arriba: volver y favorito siguen al usuario al bajar por el programa
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(AlbaShapes.boton)
+                        .background(AlbaCard.copy(alpha = 0.92f))
+                        .border(1.dp, AlbaBorder, AlbaShapes.boton)
+                        .clickable { alVolver() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "Volver",
+                        tint = AlbaWhite
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(AlbaShapes.boton)
+                        .background(AlbaCard.copy(alpha = 0.92f))
+                        .border(1.dp, AlbaBorder, AlbaShapes.boton),
+                    contentAlignment = Alignment.Center
+                ) {
+                    BotonFavoritoBurst(
+                        esFavorito = esFavorito,
+                        alAlternar = { estadoViewModel.alternarFavorito(programa.id) }
+                    )
+                }
             }
         }
     }

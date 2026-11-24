@@ -1,0 +1,26 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- icono monocromatico blanco de 24dp con los 3 arcos de corpaliv para notificaciones -->
+    <path
+        android:pathData="M 20,9 A 8,8 0 0,1 4,9"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M 17.2,9 A 5.2,5.2 0 0,1 6.8,9"
+        android:strokeWidth="2.0"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M 14.5,9 A 2.5,2.5 0 0,1 9.5,9"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+</vector>

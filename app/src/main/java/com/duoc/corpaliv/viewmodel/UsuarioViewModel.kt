@@ -10,6 +10,7 @@ import com.duoc.corpaliv.data.AppDatabase
 import com.duoc.corpaliv.data.EstadoDataStore
 import com.duoc.corpaliv.data.SolicitudEntity
 import com.duoc.corpaliv.model.ProgramaSocial
+import com.duoc.corpaliv.model.SesionActiva
 import com.duoc.corpaliv.model.UsuarioErrores
 import com.duoc.corpaliv.model.UsuarioUiState
 import com.duoc.corpaliv.model.listaProgramasAlbaLab
@@ -22,6 +23,7 @@ import com.duoc.corpaliv.validation.validarCredencialesLogin
 import com.duoc.corpaliv.validation.validarMensaje
 import com.duoc.corpaliv.validation.validarNombre
 import com.duoc.corpaliv.validation.validarRut
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -42,11 +44,19 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
     private val _estado = MutableStateFlow(UsuarioUiState())
     val estado: StateFlow<UsuarioUiState> = _estado
 
+    // flujo liviano solo con el usuario logueado para no recomponer barras ni inicio al escribir en contacto
+    private val _sesionActiva = MutableStateFlow(SesionActiva())
+    val sesionActiva: StateFlow<SesionActiva> = _sesionActiva
+
     private val _programaSeleccionado = MutableStateFlow(listaProgramasAlbaLab.first())
     val programaSeleccionado: StateFlow<ProgramaSocial> = _programaSeleccionado
 
     private val _solicitudSeleccionada = MutableStateFlow<SolicitudEntity?>(null)
     val solicitudSeleccionada: StateFlow<SolicitudEntity?> = _solicitudSeleccionada
+
+    // activa el skeleton breve solo al emitir una nueva solicitud para una transicion mas natural
+    private val _cargandoComprobante = MutableStateFlow(false)
+    val cargandoComprobante: StateFlow<Boolean> = _cargandoComprobante
 
     val listaSolicitudes: StateFlow<List<SolicitudEntity>> = solicitudDao.obtenerSolicitudes()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -116,11 +126,15 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
 
         val nombreExtraido = actual.correoLogin.substringBefore("@")
             .replaceFirstChar { c -> c.uppercase() }
+        val nombreFinal = nombreExtraido.ifBlank { "Colaborador" }
+        val correoFinal = actual.correoLogin.trim()
+
+        _sesionActiva.value = SesionActiva(nombre = nombreFinal, correo = correoFinal)
 
         _estado.update {
             it.copy(
-                nombreUsuarioActivo = nombreExtraido.ifBlank { "Colaborador" },
-                correoUsuarioActivo = actual.correoLogin.trim(),
+                nombreUsuarioActivo = nombreFinal,
+                correoUsuarioActivo = correoFinal,
                 claveLogin = actual.claveLogin,
                 errorLoginCorreo = null,
                 errorLoginClave = null
@@ -154,8 +168,9 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // guarda la solicitud elegida en el perfil para abrir su comprobante
+    // guarda la solicitud elegida en el perfil para abrir su comprobante de inmediato
     fun verDetalleSolicitud(solicitud: SolicitudEntity) {
+        _cargandoComprobante.value = false
         _solicitudSeleccionada.value = solicitud
     }
 
@@ -230,8 +245,12 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         return !hayErrores
     }
 
-    // guarda la solicitud en sqlite: si hay internet queda recibida y si no pendiente sin red
-    fun guardarEnSqlite(hayInternet: Boolean, onGuardado: () -> Unit = {}) {
+    // guarda la solicitud en sqlite, abre el skeleton y avisa cuando el comprobante ya esta visible
+    fun guardarEnSqlite(
+        hayInternet: Boolean,
+        onGuardado: (String) -> Unit = {},
+        onComprobanteListo: (String) -> Unit = {}
+    ) {
         val actual = _estado.value
         val fechaHoy = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
         val estadoInicial = if (hayInternet) "RECIBIDA" else "PENDIENTE SIN RED"
@@ -250,6 +269,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         )
 
         viewModelScope.launch {
+            _cargandoComprobante.value = true
             // guarda en la base de datos y arma un folio correlativo unico como al-2026-0001
             val nuevoId = solicitudDao.insertarSolicitud(solicitudInicial)
             val folioGenerado = String.format(Locale.getDefault(), "AL-2026-%04d", nuevoId)
@@ -260,7 +280,15 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             // borra lo que habia en los campos del formulario para dejarlo limpio
             limpiarFormularioContacto()
 
-            onGuardado()
+            onGuardado(folioGenerado)
+
+            // muestra el skeleton del comprobante para una transicion natural antes de revelar el folio
+            delay(1350)
+            _cargandoComprobante.value = false
+
+            // espera breve para que el ticket animado se dibuje y luego dispara la notificacion
+            delay(350)
+            onComprobanteListo(folioGenerado)
         }
     }
 
@@ -289,6 +317,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             claveLogin = CredencialesPrueba.CLAVE,
             recordarCorreo = recordar
         )
+        _sesionActiva.value = SesionActiva()
         _solicitudSeleccionada.value = null
     }
 
