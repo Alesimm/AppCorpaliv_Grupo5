@@ -4,6 +4,7 @@ package com.duoc.corpaliv.navigation
 // evita destellos blancos y mantiene fija la barra inferior para animar la pildora en vivo
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -15,6 +16,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -179,11 +181,17 @@ fun AppNavigation(
             )
         }
     ) {
-        // scaffold unico y persistente: las barras no parpadean y la bottombar anima en vivo
+        // scaffold unico y persistente: las barras entran con animacion suave al salir del login
         Scaffold(
             containerColor = AlbaBlack,
             topBar = {
-                if (mostrarBarras) {
+                AnimatedVisibility(
+                    visible = mostrarBarras,
+                    enter = slideInVertically(tween(520, easing = EaseOutCubic)) { -it } +
+                        fadeIn(tween(460, easing = EaseOutCubic)),
+                    exit = slideOutVertically(tween(240, easing = LinearOutSlowInEasing)) { -it } +
+                        fadeOut(tween(200))
+                ) {
                     AppTopBar(
                         titulo = tituloParaRuta(rutaActual),
                         alAbrirMenu = abrirMenu
@@ -191,7 +199,13 @@ fun AppNavigation(
                 }
             },
             bottomBar = {
-                if (mostrarBarras) {
+                AnimatedVisibility(
+                    visible = mostrarBarras,
+                    enter = slideInVertically(tween(580, delayMillis = 80, easing = EaseOutCubic)) { it } +
+                        fadeIn(tween(520, delayMillis = 80, easing = EaseOutCubic)),
+                    exit = slideOutVertically(tween(240, easing = LinearOutSlowInEasing)) { it } +
+                        fadeOut(tween(200))
+                ) {
                     AppBottomBar(
                         rutaActual = rutaActual,
                         alNavegar = { destino -> mainViewModel.navegarBottom(destino) }

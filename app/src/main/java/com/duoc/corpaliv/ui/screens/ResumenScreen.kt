@@ -4,6 +4,10 @@ package com.duoc.corpaliv.ui.screens
 // usa dialogo animado y selector ModalBottomSheet para editar la solicitud
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +24,7 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,11 +32,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.duoc.corpaliv.data.SolicitudEntity
 import com.duoc.corpaliv.ui.components.BotonPrincipal
 import com.duoc.corpaliv.ui.components.BotonSecundario
@@ -207,21 +216,8 @@ private fun ContenidoComprobante(
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .clip(AlbaShapes.chip)
-                        .background(AlbaOrange.copy(alpha = 0.14f))
-                        .border(1.dp, AlbaOrange, AlbaShapes.chip)
-                        .padding(horizontal = 12.dp, vertical = 5.dp)
-                ) {
-                    Text(
-                        text = solicitud.estadoEnvio,
-                        color = AlbaOrange,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                }
+                // insignia de estado con pulso sutil sincronizado con el trazo del ticket
+                BadgeEstadoAnimado(estado = solicitud.estadoEnvio)
             }
         }
 
@@ -272,6 +268,57 @@ private fun ContenidoComprobante(
         BotonPrincipal(
             texto = "INICIO",
             alHacerClick = alIrAInicio
+        )
+    }
+}
+
+// caja de estado (RECIBIDA / PENDIENTE) con animacion sutil sincronizada con el ticket de exito
+@Composable
+private fun BadgeEstadoAnimado(estado: String) {
+    val escala = remember { Animatable(0.96f) }
+    val brillo = remember { Animatable(0f) }
+
+    LaunchedEffect(estado) {
+        // sincroniza justo cuando CheckAnimadoExito termina el circulo y dibuja el ticket (180 + 460 ms)
+        delay(640)
+        coroutineScope {
+            launch {
+                escala.animateTo(1.06f, tween(200, easing = EaseOutCubic))
+                escala.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(
+                        dampingRatio = 0.65f,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                )
+            }
+            launch {
+                brillo.animateTo(1f, tween(220, easing = EaseOutCubic))
+                brillo.animateTo(0f, tween(420, easing = EaseOutCubic))
+            }
+        }
+    }
+
+    val alphaFondo = 0.14f + (0.14f * brillo.value)
+    val alphaBorde = 0.72f + (0.28f * brillo.value)
+
+    Box(
+        modifier = Modifier
+            .graphicsLayer {
+                scaleX = escala.value
+                scaleY = escala.value
+            }
+            .clip(AlbaShapes.chip)
+            .background(AlbaOrange.copy(alpha = alphaFondo))
+            .border(1.dp, AlbaOrange.copy(alpha = alphaBorde), AlbaShapes.chip)
+            .padding(horizontal = 12.dp, vertical = 5.dp)
+    ) {
+        Text(
+            text = estado,
+            color = AlbaOrange,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
         )
     }
 }
