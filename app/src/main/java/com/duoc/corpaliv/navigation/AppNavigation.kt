@@ -18,7 +18,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
@@ -229,7 +231,16 @@ fun AppNavigation(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(AlbaBlack)
-                    .then(if (mostrarBarras) Modifier.padding(innerPadding) else Modifier),
+                    .then(
+                        if (mostrarBarras) {
+                            Modifier
+                                .padding(innerPadding)
+                                .consumeWindowInsets(innerPadding)
+                                .imePadding()
+                        } else {
+                            Modifier
+                        }
+                    ),
                 enterTransition = { entradaSutil },
                 exitTransition = { salidaSutil },
                 popEnterTransition = { entradaSutil },

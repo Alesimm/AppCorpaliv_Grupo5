@@ -6,6 +6,8 @@ package com.duoc.corpaliv.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,11 +26,14 @@ import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.duoc.corpaliv.model.listaProgramasAlbaLab
 import com.duoc.corpaliv.ui.components.OpcionSelector
 import com.duoc.corpaliv.ui.components.SelectorBottomSheetAlba
@@ -72,6 +77,8 @@ fun ContactScreen(
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val modoColaboradorActivo by estadoViewModel.activo.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val mensajeBringIntoView = remember { BringIntoViewRequester() }
 
     Column(
         modifier = Modifier
@@ -227,7 +234,10 @@ fun ContactScreen(
         EtiquetaCampo("MENSAJE (OPCIONAL)")
         OutlinedTextField(
             value = estado.mensaje,
-            onValueChange = viewModel::onMensajeChange,
+            onValueChange = {
+                viewModel.onMensajeChange(it)
+                scope.launch { mensajeBringIntoView.bringIntoView() }
+            },
             placeholder = { Text("Cuéntanos más detalles de tu propuesta...", color = AlbaTextSecondary) },
             minLines = 3,
             isError = estado.errores.mensaje != null,
@@ -236,7 +246,17 @@ fun ContactScreen(
             },
             shape = AlbaShapes.campo,
             colors = coloresInputAlba(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .bringIntoViewRequester(mensajeBringIntoView)
+                .onFocusEvent { focusState ->
+                    if (focusState.isFocused) {
+                        scope.launch {
+                            delay(250)
+                            mensajeBringIntoView.bringIntoView()
+                        }
+                    }
+                }
         )
 
         Spacer(modifier = Modifier.height(20.dp))
