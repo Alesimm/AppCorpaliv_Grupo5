@@ -9,11 +9,13 @@ import androidx.lifecycle.viewModelScope
 import com.duoc.corpaliv.data.AppDatabase
 import com.duoc.corpaliv.data.EstadoDataStore
 import com.duoc.corpaliv.data.SolicitudEntity
+import com.duoc.corpaliv.data.SolicitudRepository
 import com.duoc.corpaliv.model.ProgramaSocial
 import com.duoc.corpaliv.model.SesionActiva
 import com.duoc.corpaliv.model.UsuarioErrores
 import com.duoc.corpaliv.model.UsuarioUiState
 import com.duoc.corpaliv.model.listaProgramasAlbaLab
+import com.duoc.corpaliv.remote.RetrofitClient
 import com.duoc.corpaliv.validation.CredencialesPrueba
 import com.duoc.corpaliv.validation.validarApellido
 import com.duoc.corpaliv.validation.validarClaveLogin
@@ -38,7 +40,10 @@ import java.util.Locale
 // viewmodel principal que administra la sesion del usuario y las solicitudes de ayuda
 class UsuarioViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val solicitudDao = AppDatabase.obtenerBaseDatos(application).solicitudDao()
+    private val solicitudRepository = SolicitudRepository(
+        solicitudDao = AppDatabase.obtenerBaseDatos(application).solicitudDao(),
+        api = RetrofitClient.solicitudApi
+    )
     private val estadoDataStore = EstadoDataStore(application)
 
     private val _estado = MutableStateFlow(UsuarioUiState())
@@ -58,11 +63,11 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
     private val _cargandoComprobante = MutableStateFlow(false)
     val cargandoComprobante: StateFlow<Boolean> = _cargandoComprobante
 
-    val listaSolicitudes: StateFlow<List<SolicitudEntity>> = solicitudDao.obtenerSolicitudes()
+    val listaSolicitudes: StateFlow<List<SolicitudEntity>> = solicitudRepository.solicitudes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        // al iniciar la app lee si habia un correo guardado con la opcion recordarme
+        // al iniciar lee el correo recordado e intenta sincronizar solicitudes desde el microservicio
         viewModelScope.launch {
             val correoRecordado = estadoDataStore.obtenerCorreoRecordado().first()
             if (correoRecordado.isNotBlank()) {
@@ -73,6 +78,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
                     )
                 }
             }
+            solicitudRepository.refrescarDesdeServidor()
         }
     }
 
@@ -270,17 +276,14 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
 
         viewModelScope.launch {
             _cargandoComprobante.value = true
-            // guarda en la base de datos y arma un folio correlativo unico como al-2026-0001
-            val nuevoId = solicitudDao.insertarSolicitud(solicitudInicial)
-            val folioGenerado = String.format(Locale.getDefault(), "AL-2026-%04d", nuevoId)
-            val solicitudFinal = solicitudInicial.copy(id = nuevoId.toInt(), folio = folioGenerado)
-            solicitudDao.actualizarSolicitud(solicitudFinal)
+            // intenta enviar al microservicio spring boot y cae a room como respaldo si no hay red
+            val solicitudFinal = solicitudRepository.crearSolicitud(solicitudInicial, hayInternet)
             _solicitudSeleccionada.value = solicitudFinal
 
             // borra lo que habia en los campos del formulario para dejarlo limpio
             limpiarFormularioContacto()
 
-            onGuardado(folioGenerado)
+            onGuardado(solicitudFinal.folio)
 
             // muestra el skeleton del comprobante para una transicion natural antes de revelar el folio
             delay(1350)
@@ -288,7 +291,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
 
             // espera breve para que el ticket animado se dibuje y luego dispara la notificacion
             delay(350)
-            onComprobanteListo(folioGenerado)
+            onComprobanteListo(solicitudFinal.folio)
         }
     }
 
@@ -321,10 +324,11 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         _solicitudSeleccionada.value = null
     }
 
-    // busca las solicitudes que se guardaron sin internet y las cambia a estado recibida
+    // reenvia las solicitudes guardadas sin red al microservicio y actualiza el historial
     fun sincronizarPendientes() {
         viewModelScope.launch {
-            solicitudDao.sincronizarPendientes()
+            solicitudRepository.sincronizarPendientes()
+            solicitudRepository.refrescarDesdeServidor()
             _solicitudSeleccionada.value?.let { actual ->
                 if (actual.estadoEnvio.startsWith("PENDIENTE")) {
                     _solicitudSeleccionada.value = actual.copy(estadoEnvio = "RECIBIDA")
@@ -333,17 +337,24 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // borra una solicitud de la base de datos cuando el usuario confirma en el dialogo
+    // recarga las solicitudes desde el microservicio spring boot si esta disponible
+    fun recargarSolicitudesServidor() {
+        viewModelScope.launch {
+            solicitudRepository.refrescarDesdeServidor()
+        }
+    }
+
+    // borra una solicitud en el microservicio y en room cuando el usuario confirma
     fun eliminarSolicitud(solicitud: SolicitudEntity) {
         viewModelScope.launch {
-            solicitudDao.eliminarSolicitud(solicitud)
+            solicitudRepository.eliminarSolicitud(solicitud)
             if (_solicitudSeleccionada.value?.id == solicitud.id) {
                 _solicitudSeleccionada.value = null
             }
         }
     }
 
-    // actualiza los datos editados de una solicitud ya guardada en sqlite
+    // actualiza los datos editados en room y sincroniza por put con el microservicio
     fun actualizarSolicitudExistente(
         solicitud: SolicitudEntity,
         nuevaColaboracion: String,
@@ -364,8 +375,8 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         )
 
         viewModelScope.launch {
-            solicitudDao.actualizarSolicitud(solicitudActualizada)
-            _solicitudSeleccionada.value = solicitudActualizada
+            val actualizada = solicitudRepository.actualizarSolicitud(solicitudActualizada)
+            _solicitudSeleccionada.value = actualizada
         }
     }
 }

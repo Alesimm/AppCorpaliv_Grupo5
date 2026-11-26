@@ -18,9 +18,17 @@ interface SolicitudDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarSolicitud(solicitud: SolicitudEntity): Long
 
+    // guarda varias solicitudes traidas desde el servidor sin duplicar ids
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarTodas(solicitudes: List<SolicitudEntity>)
+
     // operacion read: trae todas las solicitudes desde la mas nueva a la mas vieja
     @Query("SELECT * FROM solicitudes ORDER BY id DESC")
     fun obtenerSolicitudes(): Flow<List<SolicitudEntity>>
+
+    // consulta las solicitudes que quedaron guardadas sin conexion para reenviarlas
+    @Query("SELECT * FROM solicitudes WHERE estadoEnvio LIKE 'PENDIENTE%'")
+    suspend fun obtenerPendientes(): List<SolicitudEntity>
 
     // operacion update: cambia datos o actualiza el estado de una solicitud
     @Update
