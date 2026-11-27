@@ -12,6 +12,9 @@ object RetrofitClient {
     // 10.0.2.2 apunta al localhost del computador cuando la app corre en el emulador android
     private const val BASE_URL_MICROSERVICIO = "http://10.0.2.2:8080/"
 
+    // url publica de la api externa de indicadores economicos de chile
+    private const val BASE_URL_MINDICADOR = "https://mindicador.cl/"
+
     // timeouts cortos para pasar rapido al respaldo local si el servidor esta apagado
     private val clienteHttp = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)
@@ -27,5 +30,15 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(SolicitudApiService::class.java)
+    }
+
+    // instancia unica de la api externa mindicador independiente del microservicio propio
+    val mindicadorApi: MindicadorApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL_MINDICADOR)
+            .client(clienteHttp)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(MindicadorApiService::class.java)
     }
 }
