@@ -107,6 +107,7 @@ fun ContactScreen(
     indicadoresViewModel: IndicadoresViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val cargandoComprobante by viewModel.cargandoComprobante.collectAsStateWithLifecycle()
     val modoColaboradorActivo by estadoViewModel.activo.collectAsStateWithLifecycle()
     val estadoIndicadores by indicadoresViewModel.estado.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -314,6 +315,7 @@ fun ContactScreen(
 
         val esOscuroBtn = LocalEsTemaOscuro.current
         Button(
+            enabled = !cargandoComprobante,
             onClick = {
                 if (viewModel.validarFormulario()) {
                     val conectado = hayConexionInternet(context)
@@ -397,16 +399,6 @@ private fun DesplegableIndicadoresContacto(
         targetValue = if (abierto) 180f else 0f,
         animationSpec = tween(220),
         label = "flecha_uf_contacto"
-    )
-    val transicionGiro = rememberInfiniteTransition(label = "giro_uf_contacto")
-    val anguloGiro by transicionGiro.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 700, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "angulo_uf_contacto"
     )
 
     Column(
@@ -501,13 +493,28 @@ private fun DesplegableIndicadoresContacto(
                             .clickable(enabled = !estado.cargando) { alRecargar() }
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
+                        val anguloActual = if (estado.cargando) {
+                            val transicionGiro = rememberInfiniteTransition(label = "giro_uf_contacto")
+                            val angulo by transicionGiro.animateFloat(
+                                initialValue = 0f,
+                                targetValue = 360f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(durationMillis = 700, easing = LinearEasing),
+                                    repeatMode = RepeatMode.Restart
+                                ),
+                                label = "angulo_uf_contacto"
+                            )
+                            angulo
+                        } else {
+                            0f
+                        }
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Actualizar indicadores",
                             tint = AlbaOrange,
                             modifier = Modifier
                                 .size(15.dp)
-                                .rotate(if (estado.cargando) anguloGiro else 0f)
+                                .rotate(anguloActual)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(

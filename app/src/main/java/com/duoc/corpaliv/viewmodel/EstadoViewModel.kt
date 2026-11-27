@@ -30,7 +30,7 @@ class EstadoViewModel(application: Application) : AndroidViewModel(application) 
 
     // lista reactiva con los codigos de los programas marcados como favoritos
     val favoritos: StateFlow<Set<String>> = estadoDataStore.obtenerFavoritos()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf("taller_oficios"))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     // avisa a toda la app si debe mostrar el fondo oscuro o el fondo claro
     val esTemaOscuro: StateFlow<Boolean> = estadoDataStore.obtenerTemaOscuro()

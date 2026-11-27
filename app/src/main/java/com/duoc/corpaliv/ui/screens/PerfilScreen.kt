@@ -73,17 +73,6 @@ fun PerfilScreen(
         usuarioViewModel.recargarSolicitudesServidor(silencioso = true)
     }
 
-    val transicionGiro = rememberInfiniteTransition(label = "giro_solicitudes")
-    val anguloGiro by transicionGiro.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 700, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "angulo_solicitudes"
-    )
-
     val hayPendientes = remember(solicitudes) {
         solicitudes.any { it.estadoEnvio.startsWith("PENDIENTE") }
     }
@@ -228,7 +217,10 @@ fun PerfilScreen(
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (hayPendientes) {
-                    TextButton(onClick = { usuarioViewModel.sincronizarPendientes() }) {
+                    TextButton(
+                        onClick = { usuarioViewModel.sincronizarPendientes() },
+                        enabled = !estadoRecarga.cargando
+                    ) {
                         Text(
                             text = "Sincronizar pendientes",
                             color = AlbaOrange,
@@ -240,13 +232,28 @@ fun PerfilScreen(
                     onClick = { usuarioViewModel.recargarSolicitudesServidor() },
                     enabled = !estadoRecarga.cargando
                 ) {
+                    val anguloActual = if (estadoRecarga.cargando) {
+                        val transicionGiro = rememberInfiniteTransition(label = "giro_solicitudes")
+                        val angulo by transicionGiro.animateFloat(
+                            initialValue = 0f,
+                            targetValue = 360f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(durationMillis = 700, easing = LinearEasing),
+                                repeatMode = RepeatMode.Restart
+                            ),
+                            label = "angulo_solicitudes"
+                        )
+                        angulo
+                    } else {
+                        0f
+                    }
                     Icon(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = "Actualizar desde servidor",
                         tint = AlbaOrange,
                         modifier = Modifier
                             .size(20.dp)
-                            .rotate(if (estadoRecarga.cargando) anguloGiro else 0f)
+                            .rotate(anguloActual)
                     )
                 }
             }

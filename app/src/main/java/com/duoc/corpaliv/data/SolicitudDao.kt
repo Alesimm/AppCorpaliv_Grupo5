@@ -34,10 +34,6 @@ interface SolicitudDao {
     @Update
     suspend fun actualizarSolicitud(solicitud: SolicitudEntity)
 
-    // actualizacion masiva: cambia todas las pendientes a recibidas al recuperar internet
-    @Query("UPDATE solicitudes SET estadoEnvio = 'RECIBIDA' WHERE estadoEnvio LIKE 'PENDIENTE%'")
-    suspend fun sincronizarPendientes()
-
     // operacion delete: borra una solicitud de la base de datos del telefono
     @Delete
     suspend fun eliminarSolicitud(solicitud: SolicitudEntity)

@@ -140,10 +140,10 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             return false
         }
 
-        val nombreExtraido = actual.correoLogin.substringBefore("@")
+        val correoFinal = actual.correoLogin.trim()
+        val nombreExtraido = correoFinal.substringBefore("@")
             .replaceFirstChar { c -> c.uppercase() }
         val nombreFinal = nombreExtraido.ifBlank { "Colaborador" }
-        val correoFinal = actual.correoLogin.trim()
 
         _sesionActiva.value = SesionActiva(nombre = nombreFinal, correo = correoFinal)
 
@@ -267,6 +267,9 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         onGuardado: (String) -> Unit = {},
         onComprobanteListo: (String) -> Unit = {}
     ) {
+        if (_cargandoComprobante.value) return
+        _cargandoComprobante.value = true
+
         val actual = _estado.value
         val fechaHoy = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
         val estadoInicial = if (hayInternet) "RECIBIDA" else "PENDIENTE SIN RED"
@@ -278,14 +281,13 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             programa = actual.programa.ifBlank { listaProgramasAlbaLab.first().titulo },
             nombre = actual.nombre.trim(),
             apellido = actual.apellido.trim(),
-            correo = actual.correo,
-            rutComercial = if (actual.rutComercial.isBlank()) "No aplica" else actual.rutComercial,
-            mensaje = if (actual.mensaje.isBlank()) "Sin mensaje adicional." else actual.mensaje,
+            correo = actual.correo.trim(),
+            rutComercial = if (actual.rutComercial.isBlank()) "No aplica" else actual.rutComercial.trim(),
+            mensaje = if (actual.mensaje.isBlank()) "Sin mensaje adicional." else actual.mensaje.trim(),
             estadoEnvio = estadoInicial
         )
 
         viewModelScope.launch {
-            _cargandoComprobante.value = true
             // intenta enviar al microservicio spring boot y cae a room como respaldo si no hay red
             val solicitudFinal = solicitudRepository.crearSolicitud(solicitudInicial, hayInternet)
             _solicitudSeleccionada.value = solicitudFinal
@@ -334,34 +336,9 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         _solicitudSeleccionada.value = null
     }
 
-    // reenvia las solicitudes guardadas sin red al microservicio y actualiza el historial
+    // reenvia las solicitudes guardadas sin red usando el mismo flujo seguro de recarga
     fun sincronizarPendientes() {
-        viewModelScope.launch {
-            val enviadas = solicitudRepository.sincronizarPendientes()
-            val ok = solicitudRepository.refrescarDesdeServidor()
-            if (enviadas > 0) {
-                _solicitudSeleccionada.value?.let { actual ->
-                    if (actual.estadoEnvio.startsWith("PENDIENTE")) {
-                        _solicitudSeleccionada.value = actual.copy(estadoEnvio = "RECIBIDA")
-                    }
-                }
-                _estadoRecarga.value = EstadoRecargaSolicitudes(
-                    cargando = false,
-                    mensaje = "Pendientes sincronizadas con el servidor",
-                    esError = false
-                )
-                delay(2500)
-                _estadoRecarga.update { it.copy(mensaje = null) }
-            } else if (!ok) {
-                _estadoRecarga.value = EstadoRecargaSolicitudes(
-                    cargando = false,
-                    mensaje = "Sin conexión con el servidor",
-                    esError = true
-                )
-                delay(2500)
-                _estadoRecarga.update { it.copy(mensaje = null) }
-            }
-        }
+        recargarSolicitudesServidor(silencioso = false)
     }
 
     // recarga desde el microservicio, sube pendientes automaticamente y muestra aviso si corresponde
@@ -374,11 +351,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
             }
             val actualizado = solicitudRepository.refrescarDesdeServidor()
             if (actualizado) {
-                _solicitudSeleccionada.value?.let { actual ->
-                    if (actual.estadoEnvio.startsWith("PENDIENTE")) {
-                        _solicitudSeleccionada.value = actual.copy(estadoEnvio = "RECIBIDA")
-                    }
-                }
+                actualizarSeleccionadaDesdeRoom()
             }
             if (!silencioso) {
                 _estadoRecarga.value = if (actualizado) {
@@ -397,6 +370,23 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
                 delay(2500)
                 _estadoRecarga.update { it.copy(mensaje = null) }
             }
+        }
+    }
+
+    // vuelve a leer la ficha abierta desde room para reflejar su id y estado reales tras sincronizar
+    private suspend fun actualizarSeleccionadaDesdeRoom() {
+        val actual = _solicitudSeleccionada.value ?: return
+        val listaActual = solicitudRepository.solicitudes.first()
+        val encontrada = listaActual.firstOrNull { it.id == actual.id }
+            ?: listaActual.firstOrNull {
+                it.correo == actual.correo &&
+                    it.programa == actual.programa &&
+                    it.nombre == actual.nombre &&
+                    it.apellido == actual.apellido &&
+                    it.estadoEnvio == "RECIBIDA"
+            }
+        if (encontrada != null) {
+            _solicitudSeleccionada.value = encontrada
         }
     }
 

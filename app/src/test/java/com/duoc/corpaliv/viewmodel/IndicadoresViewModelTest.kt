@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.viewmodel
 
-// pruebas unitarias de IndicadoresViewModel controlando el reloj de corrutinas
-// cubre carga inicial y recarga manual con 2 caminos felices y 1 camino malo cada uno
+// archivo de pruebas unitarias para IndicadoresViewModel (estado de uf, utm y dolar en contacto)
+// usa mockk para simular MindicadorRepository y StandardTestDispatcher para controlar el tiempo
 
 import com.duoc.corpaliv.data.IndicadoresResumen
 import com.duoc.corpaliv.data.MindicadorRepository
@@ -37,19 +37,22 @@ class IndicadoresViewModelTest {
         fecha = "2026-11-26"
     )
 
+    // reemplaza Dispatchers.Main por un dispatcher de prueba para que viewModelScope funcione en junit
     @Before
     fun configurar() {
         Dispatchers.setMain(dispatcher)
         repository = mockk()
     }
 
+    // restaura Dispatchers.Main al terminar cada test para no afectar otras pruebas
     @After
     fun limpiar() {
         Dispatchers.resetMain()
     }
 
-    // --- carga inicial (2 felices, 1 malo) ---
+    // --- carga inicial ---
 
+    // al instanciar el viewmodel carga los indicadores, guarda el resumen y apaga el spinner cargando
     @Test
     fun init_caminoFeliz1_cargaIndicadoresYApagaCargando() = runTest {
         coEvery { repository.obtenerResumen() } returns resumenEjemplo
@@ -62,6 +65,7 @@ class IndicadoresViewModelTest {
         assertFalse(vm.estado.value.esError)
     }
 
+    // en la carga automatica inicial no debe aparecer el banner verde de "Indicadores actualizados"
     @Test
     fun init_caminoFeliz2_cargaAutomaticaNoMuestraBannerManual() = runTest {
         coEvery { repository.obtenerResumen() } returns resumenEjemplo
@@ -72,6 +76,7 @@ class IndicadoresViewModelTest {
         assertNull(vm.estado.value.mensajeEstado)
     }
 
+    // si no hay internet al iniciar, marca esError=true, deja resumen en null y muestra aviso de sin conexion
     @Test
     fun init_caminoMalo_sinRedDejaErrorVisibleYSinResumen() = runTest {
         coEvery { repository.obtenerResumen() } throws RuntimeException("Sin internet")
@@ -85,8 +90,9 @@ class IndicadoresViewModelTest {
         assertEquals("Sin conexión para consultar mindicador.cl", vm.estado.value.mensajeEstado)
     }
 
-    // --- recarga manual (2 felices, 1 malo) ---
+    // --- recarga manual ---
 
+    // al tocar "Actualizar" (manual=true) muestra el aviso verde antes de que pasen los 2500ms del delay
     @Test
     fun cargarIndicadores_caminoFeliz1_muestraAvisoVerdeAlActualizar() = runTest {
         coEvery { repository.obtenerResumen() } returns resumenEjemplo
@@ -102,6 +108,7 @@ class IndicadoresViewModelTest {
         advanceUntilIdle()
     }
 
+    // al avanzar todo el tiempo pendiente, el aviso verde se oculta automaticamente tras 2500ms
     @Test
     fun cargarIndicadores_caminoFeliz2_avisoVerdeSeOcultaTras2500ms() = runTest {
         coEvery { repository.obtenerResumen() } returns resumenEjemplo
@@ -116,6 +123,7 @@ class IndicadoresViewModelTest {
         assertNotNull(vm.estado.value.resumen)
     }
 
+    // si falla la recarga manual (ej. modo avion), conserva los ultimos valores cargados y avisa sin conexion
     @Test
     fun cargarIndicadores_caminoMalo_enModoAvionConservaUltimosValoresYAvisa() = runTest {
         coEvery { repository.obtenerResumen() } returns resumenEjemplo
