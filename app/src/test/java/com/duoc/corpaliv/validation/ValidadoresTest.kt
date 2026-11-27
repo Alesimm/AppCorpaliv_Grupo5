@@ -1,61 +1,172 @@
 package com.duoc.corpaliv.validation
 
-// pruebas automaticas para verificar que las reglas de validacion funcionen bien
-// se ejecutan en la computadora con junit 4 sin necesitar un celular conectado
+// pruebas unitarias de todas las reglas de validacion del proyecto
+// cada funcion se prueba con 2 caminos felices y 1 camino malo para facilitar la defensa
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-// grupo de pruebas unitarias que verifican correos, claves y ruts
 class ValidadoresTest {
 
-    // prueba 1: revisa que un correo bien escrito sea aceptado sin errores
+    // --- validarCorreo (2 felices, 1 malo) ---
+
     @Test
-    fun validarCorreo_conCorreoValido_retornaNull() {
-        val resultado = validarCorreo("colaborador@ejemplo.cl")
-        assertNull(resultado)
+    fun validarCorreo_caminoFeliz1_correoEstandarValido() {
+        assertNull(validarCorreo("colaborador@ejemplo.cl"))
     }
 
-    // prueba 2: revisa que un correo sin arroba sea rechazado con mensaje de error
     @Test
-    fun validarCorreo_conCorreoInvalido_retornaError() {
+    fun validarCorreo_caminoFeliz2_correoConEspaciosYSubdominio() {
+        assertNull(validarCorreo("  ana.perez+test@equipo.ejemplo.cl  "))
+    }
+
+    @Test
+    fun validarCorreo_caminoMalo_sinArrobaRetornaError() {
         val resultado = validarCorreo("correo-sin-arroba")
-        assertNotNull(resultado)
         assertEquals("El formato del correo electrónico no es válido (ej: nombre@dominio.cl).", resultado)
     }
 
-    // prueba 3: revisa que una clave corta de menos de 8 letras sea rechazada
+    // --- validarClave (2 felices, 1 malo) ---
+
     @Test
-    fun validarClave_conClaveCorta_retornaError() {
-        val resultado = validarClave("Alba1")
+    fun validarClave_caminoFeliz1_letrasYNumerosMinimo8() {
+        assertNull(validarClave("Alba2026"))
+    }
+
+    @Test
+    fun validarClave_caminoFeliz2_conSimbolosYMayusculas() {
+        assertNull(validarClave("Alba2026!"))
+    }
+
+    @Test
+    fun validarClave_caminoMalo_menorA8Caracteres() {
+        assertEquals("La contraseña debe tener mínimo 8 caracteres.", validarClave("Alba1"))
+    }
+
+    // --- validarClaveLogin (2 felices, 1 malo) ---
+
+    @Test
+    fun validarClaveLogin_caminoFeliz1_claveConTexto() {
+        assertNull(validarClaveLogin("Alba2026!"))
+    }
+
+    @Test
+    fun validarClaveLogin_caminoFeliz2_claveCortaNoVaciaNoDaPistas() {
+        assertNull(validarClaveLogin("123"))
+    }
+
+    @Test
+    fun validarClaveLogin_caminoMalo_vaciaRetornaError() {
+        assertEquals("Por favor, ingresa tu contraseña.", validarClaveLogin(""))
+    }
+
+    // --- validarNombre (2 felices, 1 malo) ---
+
+    @Test
+    fun validarNombre_caminoFeliz1_nombreSimple() {
+        assertNull(validarNombre("Camila"))
+    }
+
+    @Test
+    fun validarNombre_caminoFeliz2_nombreCompuestoConTilde() {
+        assertNull(validarNombre("María José"))
+    }
+
+    @Test
+    fun validarNombre_caminoMalo_caracteresEspecialesRechazados() {
+        assertEquals("El nombre no puede contener caracteres especiales", validarNombre("Ana@!"))
+    }
+
+    // --- validarApellido (2 felices, 1 malo) ---
+
+    @Test
+    fun validarApellido_caminoFeliz1_apellidoSimple() {
+        assertNull(validarApellido("Rojas"))
+    }
+
+    @Test
+    fun validarApellido_caminoFeliz2_apellidoCompuestoConEneYTilde() {
+        assertNull(validarApellido("Núñez Peña"))
+    }
+
+    @Test
+    fun validarApellido_caminoMalo_caracteresEspecialesRechazados() {
+        assertEquals("El apellido no puede contener caracteres especiales", validarApellido("Pérez."))
+    }
+
+    // --- validarRut (2 felices, 1 malo) ---
+
+    @Test
+    fun validarRut_caminoFeliz1_conPuntosYGuion() {
+        assertNull(validarRut("11.111.111-1"))
+    }
+
+    @Test
+    fun validarRut_caminoFeliz2_sinPuntosYDigitoK() {
+        assertNull(validarRut("12345678-k"))
+    }
+
+    @Test
+    fun validarRut_caminoMalo_incompletoSinGuion() {
+        assertEquals("Formato de rut invalido (ej: 12345678-5)", validarRut("12345"))
+    }
+
+    // --- validarColaboracion (2 felices, 1 malo) ---
+
+    @Test
+    fun validarColaboracion_caminoFeliz1_donacion() {
+        assertNull(validarColaboracion("Donación"))
+    }
+
+    @Test
+    fun validarColaboracion_caminoFeliz2_alianzaEmpresarial() {
+        assertNull(validarColaboracion("Alianza empresarial"))
+    }
+
+    @Test
+    fun validarColaboracion_caminoMalo_vacioRetornaError() {
+        assertEquals("Selecciona como quieres ayudar", validarColaboracion("   "))
+    }
+
+    // --- validarMensaje (2 felices, 1 malo) ---
+
+    @Test
+    fun validarMensaje_caminoFeliz1_vacioEsOpcional() {
+        assertNull(validarMensaje(""))
+    }
+
+    @Test
+    fun validarMensaje_caminoFeliz2_dentroDelLimite200() {
+        assertNull(validarMensaje("Me gustaria apoyar el taller con materiales."))
+    }
+
+    @Test
+    fun validarMensaje_caminoMalo_supera200Caracteres() {
+        val textoLargo = "a".repeat(201)
+        assertEquals("El mensaje no puede superar los 200 caracteres", validarMensaje(textoLargo))
+    }
+
+    // --- validarCredencialesLogin (2 felices, 1 malo) ---
+
+    @Test
+    fun validarCredencialesLogin_caminoFeliz1_credencialesExactas() {
+        assertNull(validarCredencialesLogin("colaborador@ejemplo.cl", "Alba2026!"))
+    }
+
+    @Test
+    fun validarCredencialesLogin_caminoFeliz2_correoConMayusculasYEspacios() {
+        assertNull(validarCredencialesLogin("  COLABORADOR@EJEMPLO.CL ", "Alba2026!"))
+    }
+
+    @Test
+    fun validarCredencialesLogin_caminoMalo_claveErroneaMensajeGenerico() {
+        val resultado = validarCredencialesLogin("colaborador@ejemplo.cl", "OtraClave1")
         assertNotNull(resultado)
-        assertEquals("La contraseña debe tener mínimo 8 caracteres.", resultado)
-    }
-
-    // prueba 4: revisa que un rut con guion y digito verificador sea aceptado
-    @Test
-    fun validarRut_conRutValidoFicticio_retornaNull() {
-        val resultado = validarRut("11.111.111-1")
-        assertNull(resultado)
-    }
-
-    // prueba 5: revisa que un rut incompleto sin guion sea rechazado
-    @Test
-    fun validarRut_conRutInvalido_retornaError() {
-        val resultado = validarRut("12345")
-        assertNotNull(resultado)
-        assertEquals("Formato de rut invalido (ej: 12345678-5)", resultado)
-    }
-
-    // prueba 6: revisa que el login acepte solo las credenciales correctas
-    @Test
-    fun validarCredencialesLogin_conDatosCorrectosEIncorrectos() {
-        val correcto = validarCredencialesLogin("colaborador@ejemplo.cl", "Alba2026!")
-        assertNull(correcto)
-
-        val claveErronea = validarCredencialesLogin("colaborador@ejemplo.cl", "ClaveErronea1")
-        assertEquals("Correo electrónico o contraseña incorrectos. Verifica tus credenciales.", claveErronea)
+        assertEquals(
+            "Correo electrónico o contraseña incorrectos. Verifica tus credenciales.",
+            resultado
+        )
     }
 }
