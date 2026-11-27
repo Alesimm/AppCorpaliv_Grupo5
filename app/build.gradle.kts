@@ -20,12 +20,19 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../release/corpaliv-release.jks")
+            storePassword = "corpaliv2026"
+            keyAlias = "corpaliv_key"
+            keyPassword = "corpaliv2026"
+        }
+    }
+
     buildTypes {
         release {
-            optimization {
-                enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
-            }
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
         }
     }
     compileOptions {

@@ -4,7 +4,8 @@
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-Material_3-4285F4?logo=android&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Room Database](https://img.shields.io/badge/Room_SQLite-Local_Storage-47A248?logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room)
 [![DataStore](https://img.shields.io/badge/Jetpack-DataStore_Preferences-F4511E?logo=android&logoColor=white)](https://developer.android.com/topic/libraries/architecture/datastore)
-[![JUnit 4](https://img.shields.io/badge/Tests_Unitarios-6%2F6_Aprobados-brightgreen)](https://junit.org/)
+[![JUnit 4](https://img.shields.io/badge/Tests-78_Unit_%2B_12_UI-brightgreen)](https://junit.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-Microservicio_H2-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Min SDK](https://img.shields.io/badge/Min_SDK-24_(Android_7.0)-informational)](https://developer.android.com/)
 [![Target SDK](https://img.shields.io/badge/Target_SDK-37_(Android_15)-informational)](https://developer.android.com/)
 
@@ -14,8 +15,9 @@ Aplicacion movil nativa para Android desarrollada como proyecto estudiantil de c
 
 ## Responsables del Proyecto
 
-- Alexander Simpertigue
-- Joseph Rivas
+- Alexander Simpertigue (`Alesimm`)
+- Joseph Rivas (`josephR`)
+- Tablero Trello: [AppCorpalivGrupo5](https://trello.com/b/5XeJlyhX/appcorpalivgrupo5)
 
 ---
 
@@ -193,6 +195,69 @@ El archivo instalable generado se ubica en:
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 ```
+
+---
+
+## Entrega Parcial 4: Microservicio, API Externa, Pruebas y APK Firmado
+
+### 1. Endpoints Utilizados (Microservicio y API Externa)
+
+#### Microservicio propio — Spring Boot (`http://10.0.2.2:8080/api/v1/solicitudes`)
+Ubicado en `microservicio-corpaliv/` (Kotlin + Spring Boot + JPA + Bean Validation + H2 persistente en `./data/corpalivdb`). Sincroniza de forma hibrida con Room SQLite (`SolicitudRepository` con proteccion `Mutex`).
+
+| Metodo | Ruta | Descripcion |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/solicitudes` | Lista todas las solicitudes registradas en H2 |
+| `GET` | `/api/v1/solicitudes/{id}` | Obtiene el detalle de una solicitud por ID |
+| `POST` | `/api/v1/solicitudes` | Crea una nueva solicitud y genera folio (`201 Created`) |
+| `PUT` | `/api/v1/solicitudes/{id}` | Actualiza colaboracion, RUT comercial o mensaje (`200 OK`) |
+| `DELETE` | `/api/v1/solicitudes/{id}` | Elimina una solicitud existente (`204 No Content`) |
+
+#### API externa — Indicadores economicos (`https://mindicador.cl/`)
+
+| Metodo | Ruta | Descripcion |
+| :--- | :--- | :--- |
+| `GET` | `/api` | Consulta valores diarios de UF, UTM, Dolar y fecha en `ContactScreen` |
+
+---
+
+### 2. Pasos para Ejecutar el Microservicio y Pruebas
+
+#### Levantar el microservicio Spring Boot (Java 21 LTS)
+```powershell
+cd microservicio-corpaliv
+.\mvnw.cmd spring-boot:run
+```
+- Puerto local: `http://localhost:8080` (desde el emulador Android: `http://10.0.2.2:8080/api/v1/`).
+- Consola web H2: `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:file:./data/corpalivdb;AUTO_SERVER=TRUE`, usuario `sa`, contrasena vacia).
+
+#### Suite completa de pruebas (90 pruebas en la app Android)
+- `app/src/test/`: **78 pruebas unitarias** (JUnit 4, MockK, `kotlinx-coroutines-test`) para `Validadores`, `SolicitudDto`, `SolicitudRepository`, `MindicadorRepository`, `MainViewModel` e `IndicadoresViewModel`.
+- `app/src/androidTest/`: **12 pruebas de interfaz Jetpack Compose** (`UiPantallasComposeTest`).
+
+```powershell
+# Pruebas unitarias Android (78 tests)
+.\gradlew.bat :app:testDebugUnitTest
+
+# Pruebas UI Compose en emulador (12 tests)
+.\gradlew.bat :app:connectedDebugAndroidTest
+
+# Pruebas del microservicio Spring Boot
+cd microservicio-corpaliv; .\mvnw.cmd test
+
+# Compilar APK firmado en modo release
+.\gradlew.bat :app:assembleRelease
+```
+
+---
+
+### 3. Captura del APK Firmado y `.jks`
+
+- **Llave Keystore (`.jks`):** [`release/corpaliv-release.jks`](release/corpaliv-release.jks) (`alias: corpaliv_key`)
+- **APK firmado (`release`):** [`release/app-release.apk`](release/app-release.apk)
+- **Configuracion Gradle:** [`app/build.gradle.kts`](app/build.gradle.kts) (`signingConfigs.release` enlazado a `buildTypes.release`)
+
+![Captura del APK firmado y archivo JKS](release/captura-apk-jks.png)
 
 ---
 
