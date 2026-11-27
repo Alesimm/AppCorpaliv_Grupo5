@@ -3,6 +3,15 @@ package com.duoc.corpaliv.ui.screens
 // cuenta del usuario activo accesible desde el menu lateral con contadores e historial
 // permite ver comprobantes, sincronizar solicitudes pendientes y eliminar con confirmacion
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,8 +21,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +35,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +66,23 @@ fun PerfilScreen(
     val sesion by usuarioViewModel.sesionActiva.collectAsStateWithLifecycle()
     val solicitudes by usuarioViewModel.listaSolicitudes.collectAsStateWithLifecycle()
     val favoritos by estadoViewModel.favoritos.collectAsStateWithLifecycle()
+    val estadoRecarga by usuarioViewModel.estadoRecarga.collectAsStateWithLifecycle()
+
+    // al entrar a cuenta revisa automaticamente si el servidor ya esta activo para subir pendientes
+    LaunchedEffect(Unit) {
+        usuarioViewModel.recargarSolicitudesServidor(silencioso = true)
+    }
+
+    val transicionGiro = rememberInfiniteTransition(label = "giro_solicitudes")
+    val anguloGiro by transicionGiro.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 700, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "angulo_solicitudes"
+    )
 
     val hayPendientes = remember(solicitudes) {
         solicitudes.any { it.estadoEnvio.startsWith("PENDIENTE") }
@@ -196,15 +226,46 @@ fun PerfilScreen(
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
-            if (hayPendientes) {
-                TextButton(onClick = { usuarioViewModel.sincronizarPendientes() }) {
-                    Text(
-                        text = "Sincronizar pendientes",
-                        color = AlbaOrange,
-                        fontSize = 12.sp
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (hayPendientes) {
+                    TextButton(onClick = { usuarioViewModel.sincronizarPendientes() }) {
+                        Text(
+                            text = "Sincronizar pendientes",
+                            color = AlbaOrange,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = { usuarioViewModel.recargarSolicitudesServidor() },
+                    enabled = !estadoRecarga.cargando
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Actualizar desde servidor",
+                        tint = AlbaOrange,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .rotate(if (estadoRecarga.cargando) anguloGiro else 0f)
                     )
                 }
             }
+        }
+
+        AnimatedVisibility(
+            visible = estadoRecarga.mensaje != null,
+            enter = fadeIn(tween(220)),
+            exit = fadeOut(tween(260))
+        ) {
+            Text(
+                text = estadoRecarga.mensaje.orEmpty(),
+                color = if (estadoRecarga.esError) AlbaOrange else Color(0xFF4CAF50),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 6.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))

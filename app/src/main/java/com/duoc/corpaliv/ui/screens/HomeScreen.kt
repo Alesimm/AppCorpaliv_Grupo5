@@ -213,6 +213,7 @@ private fun TarjetaProgramaDestacado(
             idPrograma = programa.id,
             descripcion = programa.titulo,
             conDegradadoInferior = true,
+            colorFundidoInferior = Color(0xFF111113).copy(alpha = 0.82f),
             modifier = Modifier.fillMaxSize()
         )
 
@@ -236,7 +237,7 @@ private fun TarjetaProgramaDestacado(
     }
 }
 
-// acceso rapido de colaboracion con borde redondeado unificado
+// acceso rapido de colaboracion con insignia de icono moderna y borde fino
 @Composable
 private fun BotonOpcionColaborar(
     titulo: String,
@@ -251,15 +252,23 @@ private fun BotonOpcionColaborar(
             .background(AlbaCard)
             .border(1.dp, AlbaBorder, AlbaShapes.boton)
             .clickable { alHacerClick() }
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icono,
-            contentDescription = titulo,
-            tint = AlbaOrange,
-            modifier = Modifier.size(22.dp)
-        )
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(AlbaShapes.boton)
+                .background(AlbaOrange.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icono,
+                contentDescription = titulo,
+                tint = AlbaOrange,
+                modifier = Modifier.size(19.dp)
+            )
+        }
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = titulo,

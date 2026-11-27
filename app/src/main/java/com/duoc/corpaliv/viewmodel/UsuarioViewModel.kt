@@ -37,6 +37,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// estado liviano para mostrar animacion y aviso al recargar solicitudes desde el servidor
+data class EstadoRecargaSolicitudes(
+    val cargando: Boolean = false,
+    val mensaje: String? = null,
+    val esError: Boolean = false
+)
+
 // viewmodel principal que administra la sesion del usuario y las solicitudes de ayuda
 class UsuarioViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -62,6 +69,9 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
     // activa el skeleton breve solo al emitir una nueva solicitud para una transicion mas natural
     private val _cargandoComprobante = MutableStateFlow(false)
     val cargandoComprobante: StateFlow<Boolean> = _cargandoComprobante
+
+    private val _estadoRecarga = MutableStateFlow(EstadoRecargaSolicitudes())
+    val estadoRecarga: StateFlow<EstadoRecargaSolicitudes> = _estadoRecarga
 
     val listaSolicitudes: StateFlow<List<SolicitudEntity>> = solicitudRepository.solicitudes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -327,20 +337,66 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
     // reenvia las solicitudes guardadas sin red al microservicio y actualiza el historial
     fun sincronizarPendientes() {
         viewModelScope.launch {
-            solicitudRepository.sincronizarPendientes()
-            solicitudRepository.refrescarDesdeServidor()
-            _solicitudSeleccionada.value?.let { actual ->
-                if (actual.estadoEnvio.startsWith("PENDIENTE")) {
-                    _solicitudSeleccionada.value = actual.copy(estadoEnvio = "RECIBIDA")
+            val enviadas = solicitudRepository.sincronizarPendientes()
+            val ok = solicitudRepository.refrescarDesdeServidor()
+            if (enviadas > 0) {
+                _solicitudSeleccionada.value?.let { actual ->
+                    if (actual.estadoEnvio.startsWith("PENDIENTE")) {
+                        _solicitudSeleccionada.value = actual.copy(estadoEnvio = "RECIBIDA")
+                    }
                 }
+                _estadoRecarga.value = EstadoRecargaSolicitudes(
+                    cargando = false,
+                    mensaje = "Pendientes sincronizadas con el servidor",
+                    esError = false
+                )
+                delay(2500)
+                _estadoRecarga.update { it.copy(mensaje = null) }
+            } else if (!ok) {
+                _estadoRecarga.value = EstadoRecargaSolicitudes(
+                    cargando = false,
+                    mensaje = "Sin conexión con el servidor",
+                    esError = true
+                )
+                delay(2500)
+                _estadoRecarga.update { it.copy(mensaje = null) }
             }
         }
     }
 
-    // recarga las solicitudes desde el microservicio spring boot si esta disponible
-    fun recargarSolicitudesServidor() {
+    // recarga desde el microservicio, sube pendientes automaticamente y muestra aviso si corresponde
+    fun recargarSolicitudesServidor(silencioso: Boolean = false) {
+        if (_estadoRecarga.value.cargando) return
         viewModelScope.launch {
-            solicitudRepository.refrescarDesdeServidor()
+            if (!silencioso) {
+                _estadoRecarga.value = EstadoRecargaSolicitudes(cargando = true)
+                delay(350)
+            }
+            val actualizado = solicitudRepository.refrescarDesdeServidor()
+            if (actualizado) {
+                _solicitudSeleccionada.value?.let { actual ->
+                    if (actual.estadoEnvio.startsWith("PENDIENTE")) {
+                        _solicitudSeleccionada.value = actual.copy(estadoEnvio = "RECIBIDA")
+                    }
+                }
+            }
+            if (!silencioso) {
+                _estadoRecarga.value = if (actualizado) {
+                    EstadoRecargaSolicitudes(
+                        cargando = false,
+                        mensaje = "Solicitudes actualizadas",
+                        esError = false
+                    )
+                } else {
+                    EstadoRecargaSolicitudes(
+                        cargando = false,
+                        mensaje = "Sin conexión con el servidor",
+                        esError = true
+                    )
+                }
+                delay(2500)
+                _estadoRecarga.update { it.copy(mensaje = null) }
+            }
         }
     }
 

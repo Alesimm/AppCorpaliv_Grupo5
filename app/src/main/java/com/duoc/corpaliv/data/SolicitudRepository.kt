@@ -17,9 +17,10 @@ class SolicitudRepository(
     // flujo reactivo desde room para que las pantallas se actualicen solas
     val solicitudes: Flow<List<SolicitudEntity>> = solicitudDao.obtenerSolicitudes()
 
-    // descarga las solicitudes del microservicio y las guarda en room si hay conexion
+    // sube primero las pendientes si el servidor responde y luego descarga el historial actualizado
     suspend fun refrescarDesdeServidor(): Boolean {
         return try {
+            sincronizarPendientes()
             val remotas = api.listarSolicitudes().map { it.toEntity() }
             if (remotas.isNotEmpty()) {
                 solicitudDao.insertarTodas(remotas)
@@ -84,7 +85,7 @@ class SolicitudRepository(
         return borradaEnServidor
     }
 
-    // reenvia al servidor las solicitudes guardadas sin red y actualiza su estado
+    // reenvia al servidor las solicitudes guardadas sin red y solo las aprueba si el post responde ok
     suspend fun sincronizarPendientes(): Int {
         val pendientes = solicitudDao.obtenerPendientes()
         var enviadas = 0
@@ -97,11 +98,8 @@ class SolicitudRepository(
                 solicitudDao.insertarSolicitud(creada.toEntity().copy(estadoEnvio = "RECIBIDA"))
                 enviadas++
             } catch (_: Exception) {
-                // si el servidor sigue apagado deja el registro pendiente sin fallar
+                // si el servidor sigue apagado mantiene el estado pendiente sin fallar
             }
-        }
-        if (enviadas == 0 && pendientes.isNotEmpty()) {
-            solicitudDao.sincronizarPendientes()
         }
         return enviadas
     }

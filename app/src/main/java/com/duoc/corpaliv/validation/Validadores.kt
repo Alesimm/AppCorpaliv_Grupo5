@@ -46,7 +46,10 @@ fun validarClaveLogin(clave: String): String? {
     return null
 }
 
-// revisa que el nombre tenga minimo 2 letras y no tenga numeros
+// expresion regular que acepta solo letras con tildes, ene y espacios
+private val REGEX_SOLO_LETRAS = Regex("^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$")
+
+// revisa que el nombre tenga minimo 2 letras, sin numeros ni caracteres especiales
 fun validarNombre(nombre: String): String? {
     val texto = nombre.trim()
     if (texto.isEmpty()) {
@@ -56,12 +59,15 @@ fun validarNombre(nombre: String): String? {
         return "El nombre debe tener al menos 2 caracteres"
     }
     if (texto.any { it.isDigit() }) {
-        return "El nombre no puede contener numeros"
+        return "El nombre no puede contener números"
+    }
+    if (!REGEX_SOLO_LETRAS.matches(texto)) {
+        return "El nombre no puede contener caracteres especiales"
     }
     return null
 }
 
-// revisa que el apellido tenga minimo 2 letras y no tenga numeros
+// revisa que el apellido tenga minimo 2 letras, sin numeros ni caracteres especiales
 fun validarApellido(apellido: String): String? {
     val texto = apellido.trim()
     if (texto.isEmpty()) {
@@ -71,7 +77,10 @@ fun validarApellido(apellido: String): String? {
         return "El apellido debe tener al menos 2 caracteres"
     }
     if (texto.any { it.isDigit() }) {
-        return "El apellido no puede contener numeros"
+        return "El apellido no puede contener números"
+    }
+    if (!REGEX_SOLO_LETRAS.matches(texto)) {
+        return "El apellido no puede contener caracteres especiales"
     }
     return null
 }

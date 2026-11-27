@@ -104,8 +104,8 @@ fun AppCorpaliv_Grupo5Theme(
     val colorScheme = remember(esTemaOscuro) {
         if (esTemaOscuro) {
             darkColorScheme(
-                primary = AlbaOrange,
-                onPrimary = Color.White,
+                primary = PaletaOscura.acento,
+                onPrimary = PaletaOscura.fondo,
                 secondary = PaletaOscura.textoPrincipal,
                 onSecondary = PaletaOscura.fondo,
                 background = PaletaOscura.fondo,
@@ -114,11 +114,16 @@ fun AppCorpaliv_Grupo5Theme(
                 onSurface = PaletaOscura.textoPrincipal,
                 surfaceVariant = PaletaOscura.tarjeta,
                 onSurfaceVariant = PaletaOscura.textoSecundario,
+                surfaceContainerLow = PaletaOscura.fondo,
+                surfaceContainer = PaletaOscura.superficie,
+                surfaceContainerHigh = PaletaOscura.tarjeta,
+                surfaceContainerHighest = Color(0xFF28282D),
+                outline = PaletaOscura.borde,
                 error = AlbaError
             )
         } else {
             lightColorScheme(
-                primary = AlbaOrange,
+                primary = PaletaClara.acento,
                 onPrimary = Color.White,
                 secondary = PaletaClara.textoPrincipal,
                 onSecondary = Color.White,
@@ -128,6 +133,7 @@ fun AppCorpaliv_Grupo5Theme(
                 onSurface = PaletaClara.textoPrincipal,
                 surfaceVariant = PaletaClara.superficie,
                 onSurfaceVariant = PaletaClara.textoSecundario,
+                outline = PaletaClara.borde,
                 error = AlbaError
             )
         }
@@ -162,6 +168,7 @@ fun AppCorpaliv_Grupo5Theme(
                 }
 
                 val snapshot = capturaAnterior
+                val colorBordeCortina = paletaActiva.acento
                 if (snapshot != null && progresoCortina.value < 1f) {
                     val pathCortina = remember { Path() }
                     val pathBorde = remember { Path() }
@@ -197,7 +204,7 @@ fun AppCorpaliv_Grupo5Theme(
                         )
                         drawPath(
                             path = pathBorde,
-                            color = AlbaOrange.copy(alpha = (1f - t) * 0.75f),
+                            color = colorBordeCortina.copy(alpha = (1f - t) * 0.75f),
                             style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
                         )
                     }
