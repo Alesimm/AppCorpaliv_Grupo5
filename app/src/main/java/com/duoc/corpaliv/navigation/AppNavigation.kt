@@ -51,6 +51,8 @@ import com.duoc.corpaliv.ui.screens.LoginScreen
 import com.duoc.corpaliv.ui.screens.PerfilScreen
 import com.duoc.corpaliv.ui.screens.ResumenScreen
 import com.duoc.corpaliv.ui.theme.AlbaBlack
+import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
+import androidx.compose.ui.graphics.Color
 import com.duoc.corpaliv.viewmodel.EstadoViewModel
 import com.duoc.corpaliv.viewmodel.MainViewModel
 import com.duoc.corpaliv.viewmodel.UsuarioViewModel
@@ -161,8 +163,17 @@ fun AppNavigation(
         }
     }
 
+    val esOscuroNav = LocalEsTemaOscuro.current
+    // scrim suave en modo oscuro para atenuar ligeramente el fondo sin volverlo negro puro
+    val colorScrimDrawer = if (esOscuroNav) {
+        Color.Black.copy(alpha = 0.16f)
+    } else {
+        Color.Black.copy(alpha = 0.32f)
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
+        scrimColor = colorScrimDrawer,
         gesturesEnabled = rutaActual != Screen.Login.route,
         drawerContent = {
             AppDrawerContent(

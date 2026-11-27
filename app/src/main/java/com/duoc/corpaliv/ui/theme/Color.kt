@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.ui.theme
 
 // colores oficiales de la app con soporte para modo claro y modo oscuro
-// define los fondos, textos, bordes y colores institucionales como naranja y morado
+// define fondos, superficies, bordes, botones y acentos adaptados para cada tema
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -18,28 +18,37 @@ data class AlbaPalette(
     val textoPrincipal: Color,
     val textoSecundario: Color,
     val superficie: Color,
+    val acento: Color,
+    val botonPrincipalFondo: Color,
+    val botonPrincipalTexto: Color,
     val esOscuro: Boolean
 )
 
-// combinacion de colores para el modo oscuro con fondo negro
+// modo oscuro en gris carbon elegante (sin hundirse a negro puro al abrir ventanas)
 val PaletaOscura = AlbaPalette(
-    fondo = Color(0xFF0B0B0B),
-    tarjeta = Color(0xFF161616),
-    borde = Color(0xFF262626),
-    textoPrincipal = Color(0xFFFFFFFF),
-    textoSecundario = Color(0xFF9E9E9E),
-    superficie = Color(0xFF121212),
+    fondo = Color(0xFF1A1A1E),
+    tarjeta = Color(0xFF26262C),
+    borde = Color(0xFF383842),
+    textoPrincipal = Color(0xFFF4F4F5),
+    textoSecundario = Color(0xFFA8A8B3),
+    superficie = Color(0xFF202025),
+    acento = Color(0xFFF09352),
+    botonPrincipalFondo = Color(0xFF34343D),
+    botonPrincipalTexto = Color(0xFFF4F4F5),
     esOscuro = true
 )
 
-// combinacion de colores para el modo claro con fondo crema institucional
+// modo claro en crema editorial con acento naranja institucional
 val PaletaClara = AlbaPalette(
     fondo = Color(0xFFFAF8F5),
     tarjeta = Color(0xFFFFFFFF),
-    borde = Color(0xFFD0CCC2),
-    textoPrincipal = Color(0xFF121212),
-    textoSecundario = Color(0xFF6E6C68),
-    superficie = Color(0xFFF2EFEA),
+    borde = Color(0xFFD8D4CA),
+    textoPrincipal = Color(0xFF141416),
+    textoSecundario = Color(0xFF6B6A66),
+    superficie = Color(0xFFF3F0EA),
+    acento = Color(0xFFEA6A12),
+    botonPrincipalFondo = Color(0xFF141416),
+    botonPrincipalTexto = Color(0xFFFFFFFF),
     esOscuro = false
 )
 
@@ -77,8 +86,21 @@ val AlbaTextSecondary: Color
     @Composable
     get() = LocalAlbaPalette.current.textoSecundario
 
-// colores fijos de corpaliv que no cambian: naranja, morado, rojo y verde
-val AlbaOrange = Color(0xFFEA6A12)
-val AlbaPurple = Color(0xFF5E4FA7)
-val AlbaError = Color(0xFFFF5252)
-val AlbaGreen = Color(0xFF4CAF50)
+// acento principal que suaviza el naranja a tono ambar elegante en modo oscuro
+val AlbaOrange: Color
+    @Composable
+    get() = LocalAlbaPalette.current.acento
+
+// colores para botones principales (sutil en modo oscuro, alto contraste en modo claro)
+val AlbaButtonBg: Color
+    @Composable
+    get() = LocalAlbaPalette.current.botonPrincipalFondo
+
+val AlbaButtonText: Color
+    @Composable
+    get() = LocalAlbaPalette.current.botonPrincipalTexto
+
+// colores secundarios fijos de estado y marca
+val AlbaPurple = Color(0xFF6F61BA)
+val AlbaError = Color(0xFFE85D5D)
+val AlbaGreen = Color(0xFF4CAF6A)

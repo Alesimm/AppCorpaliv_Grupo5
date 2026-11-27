@@ -24,13 +24,14 @@ import com.duoc.corpaliv.R
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaShapes
 import com.duoc.corpaliv.ui.theme.LocalEsTemaOscuro
+import com.duoc.corpaliv.ui.theme.PaletaClara
 
 // devuelve el color oficial de cada programa: amarillo, verde o morado
 fun colorDelPrograma(id: String): Color = when (id) {
     "taller_oficios" -> Color(0xFFFFC21A)
     "insercion_laboral" -> Color(0xFF2FCB7E)
     "autonomia_transicion" -> Color(0xFF9A8DF5)
-    else -> AlbaOrange
+    else -> PaletaClara.acento
 }
 
 // devuelve la imagen webp liviana correspondiente a cada programa social
@@ -92,7 +93,7 @@ fun EtiquetaCategoriaPrograma(
     }
 }
 
-// muestra la fotografia editorial webp del programa con degradado opcional para textos encima
+// muestra la fotografia editorial webp del programa adaptada para fundirse con modo oscuro
 @Composable
 fun IlustracionPrograma(
     idPrograma: String,
@@ -101,6 +102,8 @@ fun IlustracionPrograma(
     conDegradadoInferior: Boolean = false,
     colorFundidoInferior: Color = Color.Black.copy(alpha = 0.72f)
 ) {
+    val esOscuro = LocalEsTemaOscuro.current
+
     Box(modifier = modifier) {
         Image(
             painter = painterResource(id = imagenDelPrograma(idPrograma)),
@@ -109,6 +112,15 @@ fun IlustracionPrograma(
             modifier = Modifier.fillMaxSize()
         )
 
+        // velo carbon sutil en modo oscuro para atenuar fotos claras y fusionarlas con el tema
+        if (esOscuro) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF111113).copy(alpha = 0.24f))
+            )
+        }
+
         if (conDegradadoInferior) {
             Box(
                 modifier = Modifier
@@ -116,8 +128,8 @@ fun IlustracionPrograma(
                     .background(
                         Brush.verticalGradient(
                             colorStops = arrayOf(
-                                0.0f to Color.Black.copy(alpha = 0.16f),
-                                0.45f to Color.Transparent,
+                                0.0f to Color.Black.copy(alpha = if (esOscuro) 0.20f else 0.14f),
+                                0.38f to Color.Transparent,
                                 1.0f to colorFundidoInferior
                             )
                         )

@@ -122,7 +122,7 @@ private fun TarjetaProgramaCatalogo(
                     idPrograma = programa.id,
                     descripcion = programa.titulo,
                     conDegradadoInferior = true,
-                    colorFundidoInferior = Color.Black.copy(alpha = 0.28f),
+                    colorFundidoInferior = AlbaCard,
                     modifier = Modifier.fillMaxSize()
                 )
 

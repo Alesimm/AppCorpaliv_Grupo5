@@ -11,6 +11,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 @Entity
@@ -30,9 +31,17 @@ class Solicitud(
     var programa: String = "",
 
     @field:NotBlank(message = "El nombre es obligatorio.")
+    @field:Pattern(
+        regexp = "^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$",
+        message = "El nombre solo puede contener letras y espacios."
+    )
     var nombre: String = "",
 
     @field:NotBlank(message = "El apellido es obligatorio.")
+    @field:Pattern(
+        regexp = "^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$",
+        message = "El apellido solo puede contener letras y espacios."
+    )
     var apellido: String = "",
 
     @field:NotBlank(message = "El correo es obligatorio.")

@@ -55,12 +55,15 @@ import androidx.compose.ui.unit.sp
 import com.duoc.corpaliv.navigation.Screen
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
+import com.duoc.corpaliv.ui.theme.AlbaButtonBg
+import com.duoc.corpaliv.ui.theme.AlbaButtonText
 import com.duoc.corpaliv.ui.theme.AlbaCard
 import com.duoc.corpaliv.ui.theme.AlbaError
 import com.duoc.corpaliv.ui.theme.AlbaGreen
 import com.duoc.corpaliv.ui.theme.AlbaOrange
 import com.duoc.corpaliv.ui.theme.AlbaPurple
 import com.duoc.corpaliv.ui.theme.AlbaShapes
+import com.duoc.corpaliv.ui.theme.AlbaSurface
 import com.duoc.corpaliv.ui.theme.AlbaTextSecondary
 import com.duoc.corpaliv.ui.theme.AlbaWhite
 import com.duoc.corpaliv.ui.theme.LocalAlternarTema
@@ -132,9 +135,10 @@ fun AvatarColaborador(
     tamano: Int = 72,
     alHacerClick: (() -> Unit)? = null
 ) {
-    val degradado = remember {
+    val colorAcento = AlbaOrange
+    val degradado = remember(colorAcento) {
         Brush.linearGradient(
-            colors = listOf(AlbaOrange, AlbaPurple)
+            colors = listOf(colorAcento, AlbaPurple)
         )
     }
     Box(
@@ -222,7 +226,7 @@ private fun ItemBarraExpandible(
     alHacerClick: () -> Unit
 ) {
     val esOscuro = LocalEsTemaOscuro.current
-    val fondoActivo = if (esOscuro) Color(0xFF2C1E14) else Color(0xFFFFEFE4)
+    val fondoActivo = if (esOscuro) AlbaOrange.copy(alpha = 0.18f) else Color(0xFFFFEFE4)
     val colorFondo by animateColorAsState(
         targetValue = if (seleccionado) fondoActivo else Color.Transparent,
         animationSpec = tween(durationMillis = 320),
@@ -326,8 +330,9 @@ fun AppDrawerContent(
     val alAlternarTemaDrawer = LocalAlternarTema.current
 
     ModalDrawerSheet(
-        drawerContainerColor = AlbaBlack,
+        drawerContainerColor = AlbaSurface,
         drawerContentColor = AlbaWhite,
+        drawerTonalElevation = 0.dp,
         drawerShape = AlbaShapes.drawer,
         modifier = Modifier
             .fillMaxHeight()
@@ -523,18 +528,20 @@ private fun ItemMenuLateral(
     }
 }
 
-// boton principal con esquinas redondeadas unificadas
+// boton principal con esquinas redondeadas y tono sutil integrado al modo oscuro
 @Composable
 fun BotonPrincipal(
     texto: String,
     alHacerClick: () -> Unit,
     modifier: Modifier = Modifier,
-    colorFondo: Color = AlbaWhite,
-    colorTexto: Color = AlbaBlack
+    colorFondo: Color = AlbaButtonBg,
+    colorTexto: Color = AlbaButtonText
 ) {
+    val esOscuro = LocalEsTemaOscuro.current
     Button(
         onClick = alHacerClick,
         shape = AlbaShapes.boton,
+        border = if (esOscuro) BorderStroke(1.dp, AlbaBorder) else null,
         colors = ButtonDefaults.buttonColors(
             containerColor = colorFondo,
             contentColor = colorTexto

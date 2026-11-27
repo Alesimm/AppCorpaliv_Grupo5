@@ -75,6 +75,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -82,6 +83,7 @@ import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import com.duoc.corpaliv.ui.theme.AlbaBlack
 import com.duoc.corpaliv.ui.theme.AlbaBorder
 import com.duoc.corpaliv.ui.theme.AlbaCard
@@ -123,7 +125,7 @@ fun LiquidToggle(
         )
     }
 
-    val colorPistaInactiva = if (esOscuro) Color(0xFF2B2B2B) else Color(0xFFD9D4CA)
+    val colorPistaInactiva = if (esOscuro) Color(0xFF33333A) else Color(0xFFD9D4CA)
     val colorPista by animateColorAsState(
         targetValue = if (checked) colorActivo else colorPistaInactiva,
         animationSpec = tween(durationMillis = 240),
@@ -256,6 +258,7 @@ fun BotonFavoritoBurst(
             ) { alAlternar() },
         contentAlignment = Alignment.Center
     ) {
+        val colorAcentoBurst = AlbaOrange
         if (animacionActiva && progresoBurst.value < 1f) {
             Canvas(modifier = Modifier.size(48.dp)) {
                 val p = progresoBurst.value
@@ -264,7 +267,7 @@ fun BotonFavoritoBurst(
                 val radioMaximo = size.minDimension * 0.48f
 
                 drawCircle(
-                    color = AlbaOrange.copy(alpha = alpha * 0.65f),
+                    color = colorAcentoBurst.copy(alpha = alpha * 0.65f),
                     radius = radioMaximo * (0.30f + 0.70f * p),
                     center = centro,
                     style = Stroke(width = (2.4.dp.toPx() * alpha).coerceAtLeast(0.5f))
@@ -276,7 +279,7 @@ fun BotonFavoritoBurst(
                     val distancia = radioMaximo * (0.38f + 0.65f * p)
                     val px = centro.x + (cos(angulo) * distancia).toFloat()
                     val py = centro.y + (sin(angulo) * distancia).toFloat()
-                    val colorMini = if (i % 2 == 0) AlbaOrange else AlbaPurple
+                    val colorMini = if (i % 2 == 0) colorAcentoBurst else AlbaPurple
                     val tamanoMini = (8.dp.toPx() * (0.55f + 0.45f * (1f - p))).coerceAtLeast(2f)
 
                     dibujarMiniCorazon(
@@ -313,7 +316,7 @@ fun PillDotsIndicator(
     modifier: Modifier = Modifier
 ) {
     val esOscuro = LocalEsTemaOscuro.current
-    val colorInactivo = if (esOscuro) Color(0xFF3A3A3A) else Color(0xFFCFCAC0)
+    val colorInactivo = if (esOscuro) Color(0xFF3F3F46) else Color(0xFFCFCAC0)
     val posicionContinua = (paginaActual + fraccionDesplazamiento).coerceIn(0f, (cantidad - 1).coerceAtLeast(0).toFloat())
 
     Row(
@@ -391,7 +394,7 @@ fun SkeletonCardPulse(
     modifier: Modifier = Modifier
 ) {
     val esOscuro = LocalEsTemaOscuro.current
-    val base = if (esOscuro) Color(0xFF262626) else Color(0xFFE6E2D8)
+    val base = if (esOscuro) Color(0xFF2B2B30) else Color(0xFFE6E2D8)
 
     val transicion = rememberInfiniteTransition(label = "skeletonPulse")
     val opacidad by transicion.animateFloat(
@@ -452,7 +455,7 @@ fun SkeletonComprobantePulse(
     modifier: Modifier = Modifier
 ) {
     val esOscuro = LocalEsTemaOscuro.current
-    val base = if (esOscuro) Color(0xFF262626) else Color(0xFFE6E2D8)
+    val base = if (esOscuro) Color(0xFF2B2B30) else Color(0xFFE6E2D8)
 
     val transicion = rememberInfiniteTransition(label = "skeletonComprobante")
     val opacidad by transicion.animateFloat(
@@ -813,12 +816,14 @@ fun SelectorBottomSheetAlba(
     }
 
     if (abierto) {
+        val esOscuroSheet = LocalEsTemaOscuro.current
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             onDismissRequest = { abierto = false },
             sheetState = sheetState,
             containerColor = AlbaCard,
             contentColor = AlbaWhite,
+            scrimColor = if (esOscuroSheet) Color.Black.copy(alpha = 0.14f) else Color.Black.copy(alpha = 0.32f),
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             dragHandle = { BottomSheetDefaults.DragHandle(color = AlbaBorder) }
         ) {
@@ -896,6 +901,7 @@ fun DialogoAnimadoAlba(
     alCerrar: () -> Unit,
     contenido: @Composable ColumnScope.() -> Unit
 ) {
+    val esOscuroDialogo = LocalEsTemaOscuro.current
     val progreso = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         progreso.animateTo(1f, tween(220, easing = EaseOutCubic))
@@ -908,6 +914,11 @@ fun DialogoAnimadoAlba(
             decorFitsSystemWindows = false
         )
     ) {
+        // suaviza el oscurecimiento nativo del dialogo para atenuar el fondo sin volverlo negro puro
+        val ventanaDialogo = (LocalView.current.parent as? DialogWindowProvider)?.window
+        LaunchedEffect(ventanaDialogo, esOscuroDialogo) {
+            ventanaDialogo?.setDimAmount(if (esOscuroDialogo) 0.18f else 0.40f)
+        }
         val p = progreso.value
         Column(
             modifier = Modifier
