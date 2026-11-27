@@ -7,12 +7,17 @@ import com.duoc.corpaliv.remote.SolicitudApiService
 import com.duoc.corpaliv.remote.toDto
 import com.duoc.corpaliv.remote.toEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.Locale
 
 class SolicitudRepository(
     private val solicitudDao: SolicitudDao,
     private val api: SolicitudApiService
 ) {
+
+    // candado para evitar envios duplicados si se sincroniza dos veces al mismo tiempo
+    private val mutexSync = Mutex()
 
     // flujo reactivo desde room para que las pantallas se actualicen solas
     val solicitudes: Flow<List<SolicitudEntity>> = solicitudDao.obtenerSolicitudes()
@@ -38,6 +43,8 @@ class SolicitudRepository(
     ): SolicitudEntity {
         if (hayInternet) {
             try {
+                // sube pendientes antes de crear una nueva para evitar choques de ids locales
+                sincronizarPendientes()
                 val creadaRemota = api.crearSolicitud(
                     solicitudBase.copy(estadoEnvio = "RECIBIDA").toDto(incluirId = false)
                 )
@@ -57,11 +64,11 @@ class SolicitudRepository(
         return solicitudFinal
     }
 
-    // actualiza primero en room y sincroniza el cambio por put con el microservicio
+    // actualiza primero en room y sincroniza el cambio por put si ya existe en el microservicio
     suspend fun actualizarSolicitud(solicitud: SolicitudEntity): SolicitudEntity {
         solicitudDao.actualizarSolicitud(solicitud)
         try {
-            if (solicitud.id > 0) {
+            if (solicitud.id > 0 && !solicitud.estadoEnvio.startsWith("PENDIENTE")) {
                 api.actualizarSolicitud(solicitud.id.toLong(), solicitud.toDto())
             }
         } catch (_: Exception) {
@@ -70,11 +77,11 @@ class SolicitudRepository(
         return solicitud
     }
 
-    // borra en el microservicio si responde y siempre elimina el registro de room
+    // borra en el microservicio si ya estaba sincronizada y siempre elimina el registro de room
     suspend fun eliminarSolicitud(solicitud: SolicitudEntity): Boolean {
         var borradaEnServidor = false
         try {
-            if (solicitud.id > 0) {
+            if (solicitud.id > 0 && !solicitud.estadoEnvio.startsWith("PENDIENTE")) {
                 val respuesta = api.eliminarSolicitud(solicitud.id.toLong())
                 borradaEnServidor = respuesta.isSuccessful
             }
@@ -86,7 +93,7 @@ class SolicitudRepository(
     }
 
     // reenvia al servidor las solicitudes guardadas sin red y solo las aprueba si el post responde ok
-    suspend fun sincronizarPendientes(): Int {
+    suspend fun sincronizarPendientes(): Int = mutexSync.withLock {
         val pendientes = solicitudDao.obtenerPendientes()
         var enviadas = 0
         for (pendiente in pendientes) {
@@ -101,6 +108,6 @@ class SolicitudRepository(
                 // si el servidor sigue apagado mantiene el estado pendiente sin fallar
             }
         }
-        return enviadas
+        enviadas
     }
 }

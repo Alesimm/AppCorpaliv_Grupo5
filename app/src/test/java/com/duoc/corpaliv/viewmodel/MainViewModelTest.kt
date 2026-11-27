@@ -1,7 +1,7 @@
 package com.duoc.corpaliv.viewmodel
 
-// pruebas unitarias de MainViewModel para verificar todos los eventos de navegacion
-// valida 2 caminos felices y 1 caso borde/negativo por cada bloque de acciones
+// archivo de pruebas unitarias para MainViewModel (controla eventos de navegacion en SharedFlow)
+// recolecta los eventos emitidos usando UnconfinedTestDispatcher y verifica que correspondan a la accion
 
 import com.duoc.corpaliv.navigation.NavigationEvent
 import com.duoc.corpaliv.navigation.Screen
@@ -27,19 +27,22 @@ class MainViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private lateinit var viewModel: MainViewModel
 
+    // fija Dispatchers.Main de prueba y crea un MainViewModel limpio antes de cada test
     @Before
     fun configurar() {
         Dispatchers.setMain(dispatcher)
         viewModel = MainViewModel()
     }
 
+    // restaura Dispatchers.Main al finalizar cada test
     @After
     fun limpiar() {
         Dispatchers.resetMain()
     }
 
-    // --- navegarA (2 felices, 1 negativo) ---
+    // --- navegarA ---
 
+    // al llamar navegarA(Detalle), espera que el flujo emita exactamente NavigateTo(Screen.Detalle)
     @Test
     fun navegarA_caminoFeliz1_emiteEventoHaciaDetalle() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -54,6 +57,7 @@ class MainViewModelTest {
         job.cancel()
     }
 
+    // al llamar navegarA(Perfil), espera que el flujo emita exactamente NavigateTo(Screen.Perfil)
     @Test
     fun navegarA_caminoFeliz2_emiteEventoHaciaPerfil() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -68,6 +72,7 @@ class MainViewModelTest {
         job.cancel()
     }
 
+    // verifica que navegarA(AcercaDe) no emita por error una ruta distinta como Screen.Home
     @Test
     fun navegarA_caminoMalo_noEmiteRutaDistintaALaPedida() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -82,8 +87,9 @@ class MainViewModelTest {
         job.cancel()
     }
 
-    // --- navegarBottom (2 felices, 1 negativo) ---
+    // --- navegarBottom ---
 
+    // al tocar la pestaña Catalogo en barra inferior, emite NavigateBottom(Screen.Catalogo)
     @Test
     fun navegarBottom_caminoFeliz1_emiteEventoHaciaCatalogo() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -98,6 +104,7 @@ class MainViewModelTest {
         job.cancel()
     }
 
+    // al tocar la pestaña Contacto en barra inferior, emite NavigateBottom(Screen.Contacto)
     @Test
     fun navegarBottom_caminoFeliz2_emiteEventoHaciaContacto() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -112,6 +119,7 @@ class MainViewModelTest {
         job.cancel()
     }
 
+    // verifica que navegarBottom emita NavigateBottom y no se confunda con NavigateTo normal
     @Test
     fun navegarBottom_caminoMalo_noSeConfundeConNavigateTo() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -126,8 +134,9 @@ class MainViewModelTest {
         job.cancel()
     }
 
-    // --- ingresarAlHome y cerrarSesion (2 felices, 1 borde) ---
+    // --- ingresarAlHome y cerrarSesion ---
 
+    // al iniciar sesion con exito, espera el evento LoginExitoso
     @Test
     fun ingresarAlHome_caminoFeliz1_emiteLoginExitoso() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -142,6 +151,7 @@ class MainViewModelTest {
         job.cancel()
     }
 
+    // al cerrar sesion, espera el evento CerrarSesion
     @Test
     fun cerrarSesion_caminoFeliz2_emiteCerrarSesion() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -156,6 +166,7 @@ class MainViewModelTest {
         job.cancel()
     }
 
+    // caso borde: emitir cerrarSesion cuando nadie esta escuchando el SharedFlow no debe lanzar excepcion
     @Test
     fun cerrarSesion_caminoMalo_sinSuscriptoresNoFalla() = runTest {
         viewModel.cerrarSesion()
@@ -163,8 +174,9 @@ class MainViewModelTest {
         assertTrue(true)
     }
 
-    // --- volverAtras (2 felices, 1 borde) ---
+    // --- volverAtras ---
 
+    // al llamar volverAtras(), espera el evento PopBackStack
     @Test
     fun volverAtras_caminoFeliz1_emitePopBackStack() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -179,6 +191,7 @@ class MainViewModelTest {
         job.cancel()
     }
 
+    // si se llama dos veces seguidas, debe emitir dos eventos PopBackStack en el mismo orden
     @Test
     fun volverAtras_caminoFeliz2_dosLlamadasEmitenDosEventosEnOrden() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
@@ -195,6 +208,7 @@ class MainViewModelTest {
         job.cancel()
     }
 
+    // verifica que volverAtras() nunca emita LoginExitoso por error
     @Test
     fun volverAtras_caminoMalo_noEmiteLoginExitoso() = runTest {
         val eventos = mutableListOf<NavigationEvent>()
